@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sakal Plantain Chips Cost-Profit Calculator</title>
+<style>
+body { font-family: Arial,sans-serif; background:#f4f4f4; margin:0; padding:10px; }
+h1 { text-align:center; font-size:20px; margin-bottom:10px; color:#333; line-height:1.2; }
+.container { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+label { font-size:14px; }
+input, button { width:100%; padding:6px; font-size:16px; box-sizing:border-box; }
+input.default { color:#555; opacity:0.7; }
+.result { grid-column:span 2; background:white; padding:10px; margin-top:10px; font-size:14px; border-radius:5px; box-shadow:0 0 5px rgba(0,0,0,0.1);}
+.result p { margin:2px 0; }
+.profit { font-weight:bold; font-size:16px; }
+.bar-container { width:100%; background:#ddd; height:20px; margin-top:5px; border-radius:5px; overflow:hidden; display:flex;}
+.bar-cost { height:100%; background:red; text-align:center; color:white; font-size:12px; line-height:20px; }
+.bar-profit { height:100%; background:green; text-align:center; color:white; font-size:12px; line-height:20px; }
+button { background:green; color:white; border:none; margin-top:4px; }
+</style>
+</head>
+<body>
+<h1>Sakal Plantain Chips<br>Cost-Profit Calculator</h1>
+<div class="container">
+  <label>Total price of plantain (GHS)</label>
+  <input id="plantain">
+  <label>Oil containers used</label>
+  <input id="oilUsed">
+  <label>Price of one oil container (GHS)</label>
+  <input id="oilPrice" value="500" class="default">
+  <label>Gas cylinders used</label>
+  <input id="gasUsed">
+  <label>Price of one gas cylinder (GHS)</label>
+  <input id="gasPrice" value="330" class="default">
+  <label>Packaging price per pack</label>
+  <input id="packPrice" value="0.70" class="default">
+  <label>Packaging box price</label>
+  <input id="boxCost" value="8" class="default">
+  <label>Transportation cost</label>
+  <input id="transport">
+  <label>Number of boxes produced</label>
+  <input id="boxes">
+  <label>Packages per box</label>
+  <input id="perBox" value="48" class="default">
+  <label>Selling price per box</label>
+  <input id="boxPrice" value="200" class="default">
+  <button id="saveCSV">Save CSV</button>
+  <input type="file" id="loadCSV" accept=".csv">
+
+  <div class="result">
+    <p>Total Packages: <span id="packages">0</span></p>
+    <hr>
+    <p>Oil Cost: GHS <span id="oilCost">0</span></p>
+    <p>Gas Cost: GHS <span id="gasCost">0</span></p>
+    <p>Packaging Cost: GHS <span id="packCost">0</span></p>
+    <p>Box Cost: GHS <span id="boxTotal">0</span></p>
+    <p>Transportation: GHS <span id="transportCost">0</span></p>
+    <hr>
+    <p>Total Production Cost: GHS <span id="cost">0</span></p>
+    <p>Total Revenue: GHS <span id="revenue">0</span></p>
+    <p class="profit">Profit: GHS <span id="profit">0</span></p>
+    <p>Cost per Pack: GHS <span id="costPerPack">0</span></p>
+    <p>Profit per Pack: GHS <span id="profitPerPack">0</span></p>
+    <div class="bar-container">
+      <div class="bar-cost" id="barCost"></div>
+      <div class="bar-profit" id="barProfit"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let existingCSV = null;
+const labels = ["Plantain Cost","Oil Cost","Gas Cost","Packaging Cost","Box Cost","Transport","Total Cost","Revenue","Profit","Cost per Pack","Profit per Pack"];
+
+function calculate() {
+  const plantain = Number(document.getElementById("plantain").value)
+  const oilUsed = Number(document.getElementById("oilUsed").value)
+  const oilPrice = Number(document.getElementById("oilPrice").value)
+  const gasUsed = Number(document.getElementById("gasUsed").value)
+  const gasPrice = Number(document.getElementById("gasPrice").value)
+  const packPrice = Number(document.getElementById("packPrice").value)
+  const boxCost = Number(document.getElementById("boxCost").value)
+  const transport = Number(document.getElementById("transport").value)
+  const boxes = Number(document.getElementById("boxes").value)
+  const perBox = Number(document.getElementById("perBox").value)
+  const boxPrice = Number(document.getElementById("boxPrice").value)
+
+  const oilCost = oilUsed * oilPrice
+  const gasCost = gasUsed * gasPrice
+  const totalPackages = boxes * perBox
+  const packagingCost = totalPackages * packPrice
+  const boxTotal = boxes * boxCost
+  const totalCost = plantain + oilCost + gasCost + packagingCost + boxTotal + transport
+  const revenue = boxes * boxPrice
+  const profit = revenue - totalCost
+  const costPerPack = totalPackages ? totalCost / totalPackages : 0
+  const profitPerPack = totalPackages ? profit / totalPackages : 0
+
+  document.getElementById("packages").innerText = totalPackages
+  document.getElementById("oilCost").innerText = oilCost.toFixed(2)
+  document.getElementById("gasCost").innerText = gasCost.toFixed(2)
+  document.getElementById("packCost").innerText = packagingCost.toFixed(2)
+  document.getElementById("boxTotal").innerText = boxTotal.toFixed(2)
+  document.getElementById("transportCost").innerText = transport.toFixed(2)
+  document.getElementById("cost").innerText = totalCost.toFixed(2)
+  document.getElementById("revenue").innerText = revenue.toFixed(2)
+  const profitEl = document.getElementById("profit")
+  profitEl.innerText = profit.toFixed(2)
+  profitEl.style.color = profit>=0?"green":"red"
+  document.getElementById("costPerPack").innerText = costPerPack.toFixed(2)
+  document.getElementById("profitPerPack").innerText = profitPerPack.toFixed(2)
+
+  const total = Math.max(totalCost,revenue)
+  const barCost = document.getElementById("barCost")
+  const barProfit = document.getElementById("barProfit")
+  barCost.style.width = (totalCost/total*100)+"%"
+  barCost.innerText = "Cost: "+totalCost.toFixed(0)
+  barProfit.style.width = (profit>0?profit/total*100:0)+"%"
+  barProfit.innerText = profit>0?"Profit":""
+}
+
+document.querySelectorAll("input").forEach(input=>input.addEventListener("input",calculate))
+
+document.getElementById("saveCSV").addEventListener("click",()=>{
+  const date = new Date().toLocaleDateString()
+  const values = [
+    document.getElementById("plantain").value||0,
+    document.getElementById("oilCost").innerText,
+    document.getElementById("gasCost").innerText,
+    document.getElementById("packCost").innerText,
+    document.getElementById("boxTotal").innerText,
+    document.getElementById("transportCost").innerText,
+    document.getElementById("cost").innerText,
+    document.getElementById("revenue").innerText,
+    document.getElementById("profit").innerText,
+    document.getElementById("costPerPack").innerText,
+    document.getElementById("profitPerPack").innerText
+  ]
+
+  let csvRows = []
+
+  if(existingCSV){
+    const lines = existingCSV.split("\n").map(l=>l.split(","))
+    // Make sure each line starts with variable name
+    for(let i=0;i<labels.length;i++){
+      lines[i].push(values[i])
+    }
+    // Add header row with date if not already present
+    if(lines[0][0]!==labels[0]) lines.unshift([date])
+    else lines[0].push(date)
+    csvRows = lines
+  } else {
+    for(let i=0;i<labels.length;i++){
+      csvRows.push([labels[i], values[i]])
+    }
+    // Add header row: first column empty or labels handled, second column = date
+    csvRows[0].unshift(date)
+  }
+
+  const csvContent = csvRows.map(r=>r.join(",")).join("\n")
+  const blob = new Blob([csvContent],{type:'text/csv'})
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = "plantain_batches.csv"
+  a.click()
+  URL.revokeObjectURL(url)
+})
+
+document.getElementById("loadCSV").addEventListener("change",(e)=>{
+  const file = e.target.files[0]
+  if(!file) return
+  const reader = new FileReader()
+  reader.onload = function(e){
+    existingCSV = e.target.result
+    alert("CSV loaded. Next save will append a new column.")
+  }
+  reader.readAsText(file)
+})
+</script>
+</body>
+</html>
