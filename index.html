@@ -108,10 +108,11 @@ function calculate() {
 
 document.querySelectorAll("input").forEach(input=>input.addEventListener("input",calculate));
 
-document.getElementById("saveCSV").addEventListener("click",()=>{
+// ================== CSV SAVE/LOAD ===================
+document.getElementById("saveCSV").addEventListener("click", () => {
   const date = new Date().toLocaleDateString();
   const values = [
-    document.getElementById("plantain").value||0,
+    document.getElementById("plantain").value || 0,
     document.getElementById("oilCost").innerText,
     document.getElementById("gasCost").innerText,
     document.getElementById("packCost").innerText,
@@ -125,17 +126,21 @@ document.getElementById("saveCSV").addEventListener("click",()=>{
   ];
 
   let csvRows = [];
+
   if(existingCSV){
-    const lines = existingCSV.split("\n").map(l=>l.split(","));
-    // append new date header
+    let lines = existingCSV.trim().split("\n").map(l => l.split(","));
+
+    // Append new batch date to header row
     lines[0].push(date);
-    // append new values to each row
-    for(let i=1;i<lines.length;i++){
-      lines[i].push(values[i-1]);
+
+    // Append each value to its corresponding row (skip header)
+    for(let i=0;i<labels.length;i++){
+      if(!lines[i+1]) lines[i+1] = [labels[i]];
+      lines[i+1].push(values[i]);
     }
+
     csvRows = lines;
   } else {
-    // new CSV
     const header = ["", date];
     csvRows.push(header);
     for(let i=0;i<labels.length;i++){
@@ -143,17 +148,20 @@ document.getElementById("saveCSV").addEventListener("click",()=>{
     }
   }
 
-  const csvContent = csvRows.map(r=>r.join(",")).join("\n");
-  const blob = new Blob([csvContent],{type:'text/csv'});
+  const csvContent = csvRows.map(r => r.join(",")).join("\n");
+  const blob = new Blob([csvContent], {type:'text/csv'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = "plantain_batches.csv";
   a.click();
   URL.revokeObjectURL(url);
+
+  // store in memory so next save appends correctly
+  existingCSV = csvContent;
 });
 
-document.getElementById("loadCSV").addEventListener("change",(e)=>{
+document.getElementById("loadCSV").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
