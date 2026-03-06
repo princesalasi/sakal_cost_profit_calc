@@ -125,26 +125,18 @@ document.getElementById("saveCSV").addEventListener("click",()=>{
   ];
 
   let csvRows = [];
-
   if(existingCSV){
-    // parse CSV into rows
     const lines = existingCSV.split("\n").map(l=>l.split(","));
-    // append new column
-    for(let i=0;i<labels.length;i++){
-      lines[i].push(values[i]);
+    // append new date header
+    lines[0].push(date);
+    // append new values to each row
+    for(let i=1;i<lines.length;i++){
+      lines[i].push(values[i-1]);
     }
-    // Add header row
-    let header = lines[0].slice();
-    header.unshift(""); // first cell blank
-    header[1] = date; // new batch column header
-    csvRows.push(header);
-    // append all label rows
-    for(let i=0;i<labels.length;i++){
-      csvRows.push([labels[i], ...lines[i].slice(1)]);
-    }
+    csvRows = lines;
   } else {
     // new CSV
-    let header = ["", date];
+    const header = ["", date];
     csvRows.push(header);
     for(let i=0;i<labels.length;i++){
       csvRows.push([labels[i], values[i]]);
