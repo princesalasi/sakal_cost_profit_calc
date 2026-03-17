@@ -48,6 +48,8 @@ button { background:green; color:white; border:none; margin-top:4px; }
     <p class="profit">Profit: GHS <span id="profit">0</span></p>
     <p>Cost per Pack: GHS <span id="costPerPack">0</span></p>
     <p>Profit per Pack: GHS <span id="profitPerPack">0</span></p>
+    <!-- ====== APPENDED: Profit per Box ====== -->
+    <p>Profit per Box: GHS <span id="profitPerBox">0</span></p>
     <div class="bar-container">
       <div class="bar-cost" id="barCost"></div>
       <div class="bar-profit" id="barProfit"></div>
@@ -57,7 +59,8 @@ button { background:green; color:white; border:none; margin-top:4px; }
 
 <script>
 let existingCSV = null;
-const labels = ["Plantain Cost","Oil Cost","Gas Cost","Packaging Cost","Box Cost","Transport","Total Cost","Revenue","Profit","Cost per Pack","Profit per Pack"];
+// ====== APPENDED: Added Profit per Box label ======
+const labels = ["Plantain Cost","Oil Cost","Gas Cost","Packaging Cost","Box Cost","Transport","Total Cost","Revenue","Profit","Cost per Pack","Profit per Pack","Profit per Box"];
 
 function calculate() {
   const plantain = Number(document.getElementById("plantain").value);
@@ -82,6 +85,8 @@ function calculate() {
   const profit = revenue - totalCost;
   const costPerPack = totalPackages ? totalCost / totalPackages : 0;
   const profitPerPack = totalPackages ? profit / totalPackages : 0;
+  // ====== APPENDED: Calculate Profit per Box ======
+  const profitPerBox = boxes ? profit / boxes : 0;
 
   document.getElementById("packages").innerText = totalPackages;
   document.getElementById("oilCost").innerText = oilCost.toFixed(2);
@@ -96,6 +101,8 @@ function calculate() {
   profitEl.style.color = profit >=0 ? "green" : "red";
   document.getElementById("costPerPack").innerText = costPerPack.toFixed(2);
   document.getElementById("profitPerPack").innerText = profitPerPack.toFixed(2);
+  // ====== APPENDED: Display Profit per Box ======
+  document.getElementById("profitPerBox").innerText = profitPerBox.toFixed(2);
 
   const total = Math.max(totalCost,revenue);
   const barCost = document.getElementById("barCost");
@@ -122,7 +129,9 @@ document.getElementById("saveCSV").addEventListener("click", () => {
     document.getElementById("revenue").innerText,
     document.getElementById("profit").innerText,
     document.getElementById("costPerPack").innerText,
-    document.getElementById("profitPerPack").innerText
+    document.getElementById("profitPerPack").innerText,
+    // ====== APPENDED: Profit per Box to CSV ======
+    document.getElementById("profitPerBox").innerText
   ];
 
   let csvRows = [];
@@ -153,7 +162,7 @@ document.getElementById("saveCSV").addEventListener("click", () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = "sakal_cost_profit.csv";
+  a.download = "plantain_batches.csv";
   a.click();
   URL.revokeObjectURL(url);
 
