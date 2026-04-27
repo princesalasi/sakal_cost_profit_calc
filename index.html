@@ -17,11 +17,30 @@ input.default { color:#555; opacity:0.7; }
 .bar-cost { height:100%; background:red; text-align:center; color:white; font-size:12px; line-height:20px; }
 .bar-profit { height:100%; background:green; text-align:center; color:white; font-size:12px; line-height:20px; }
 button { background:green; color:white; border:none; margin-top:4px; }
+
+/* APPENDED: batch/week layout */
+.full-row { grid-column: span 2; display:flex; gap:8px; }
+.full-row div { flex:1; }
 </style>
 </head>
+
 <body>
 <h1>Sakal Plantain Chips<br>Cost-Profit Calculator</h1>
+
 <div class="container">
+
+  <!-- APPENDED: Batch + Week -->
+  <div class="full-row">
+    <div>
+      <label>Batch Number</label>
+      <input id="batchNumber">
+    </div>
+    <div>
+      <label>Week Number</label>
+      <input id="weekNumber">
+    </div>
+  </div>
+
   <label>Total price of plantain (GHS)</label><input id="plantain">
   <label>Oil containers used</label><input id="oilUsed">
   <label>Price of one oil container (GHS)</label><input id="oilPrice" value="500" class="default">
@@ -33,6 +52,7 @@ button { background:green; color:white; border:none; margin-top:4px; }
   <label>Number of boxes produced</label><input id="boxes">
   <label>Packages per box</label><input id="perBox" value="48" class="default">
   <label>Selling price per box</label><input id="boxPrice" value="200" class="default">
+
   <button id="saveCSV">Save CSV</button>
   <input type="file" id="loadCSV" accept=".csv">
 
@@ -48,8 +68,8 @@ button { background:green; color:white; border:none; margin-top:4px; }
     <p class="profit">Profit: GHS <span id="profit">0</span></p>
     <p>Cost per Pack: GHS <span id="costPerPack">0</span></p>
     <p>Profit per Pack: GHS <span id="profitPerPack">0</span></p>
-    <!-- ====== APPENDED: Profit per Box ====== -->
     <p>Profit per Box: GHS <span id="profitPerBox">0</span></p>
+
     <div class="bar-container">
       <div class="bar-cost" id="barCost"></div>
       <div class="bar-profit" id="barProfit"></div>
@@ -59,8 +79,12 @@ button { background:green; color:white; border:none; margin-top:4px; }
 
 <script>
 let existingCSV = null;
-// ====== APPENDED: Added Profit per Box label ======
-const labels = ["Plantain Cost","Oil Cost","Gas Cost","Packaging Cost","Box Cost","Transport","Total Cost","Revenue","Profit","Cost per Pack","Profit per Pack","Profit per Box"];
+
+const labels = [
+"Plantain Cost","Oil Cost","Gas Cost","Packaging Cost","Box Cost",
+"Transport","Total Cost","Revenue","Profit",
+"Cost per Pack","Profit per Pack","Profit per Box"
+];
 
 function calculate() {
   const plantain = Number(document.getElementById("plantain").value);
@@ -85,7 +109,6 @@ function calculate() {
   const profit = revenue - totalCost;
   const costPerPack = totalPackages ? totalCost / totalPackages : 0;
   const profitPerPack = totalPackages ? profit / totalPackages : 0;
-  // ====== APPENDED: Calculate Profit per Box ======
   const profitPerBox = boxes ? profit / boxes : 0;
 
   document.getElementById("packages").innerText = totalPackages;
@@ -96,28 +119,25 @@ function calculate() {
   document.getElementById("transportCost").innerText = transport.toFixed(2);
   document.getElementById("cost").innerText = totalCost.toFixed(2);
   document.getElementById("revenue").innerText = revenue.toFixed(2);
+
   const profitEl = document.getElementById("profit");
   profitEl.innerText = profit.toFixed(2);
-  profitEl.style.color = profit >=0 ? "green" : "red";
+  profitEl.style.color = profit >= 0 ? "green" : "red";
+
   document.getElementById("costPerPack").innerText = costPerPack.toFixed(2);
   document.getElementById("profitPerPack").innerText = profitPerPack.toFixed(2);
-  // ====== APPENDED: Display Profit per Box ======
   document.getElementById("profitPerBox").innerText = profitPerBox.toFixed(2);
 
-  const total = Math.max(totalCost,revenue);
-  const barCost = document.getElementById("barCost");
-  const barProfit = document.getElementById("barProfit");
-  barCost.style.width = (totalCost/total*100)+"%";
-  barCost.innerText = "Cost: "+totalCost.toFixed(0);
-  barProfit.style.width = (profit>0?profit/total*100:0)+"%";
-  barProfit.innerText = profit>0?"Profit":"";
+  const total = Math.max(totalCost, revenue);
+  document.getElementById("barCost").style.width = (totalCost / total * 100) + "%";
+  document.getElementById("barProfit").style.width = (profit > 0 ? profit / total * 100 : 0) + "%";
 }
 
-document.querySelectorAll("input").forEach(input=>input.addEventListener("input",calculate));
+document.querySelectorAll("input").forEach(i => i.addEventListener("input", calculate));
 
-// ================== CSV SAVE/LOAD ===================
 document.getElementById("saveCSV").addEventListener("click", () => {
   const date = new Date().toLocaleDateString();
+
   const values = [
     document.getElementById("plantain").value || 0,
     document.getElementById("oilCost").innerText,
@@ -130,56 +150,73 @@ document.getElementById("saveCSV").addEventListener("click", () => {
     document.getElementById("profit").innerText,
     document.getElementById("costPerPack").innerText,
     document.getElementById("profitPerPack").innerText,
-    // ====== APPENDED: Profit per Box to CSV ======
     document.getElementById("profitPerBox").innerText
   ];
 
   let csvRows = [];
 
-  if(existingCSV){
+  if (existingCSV) {
     let lines = existingCSV.trim().split("\n").map(l => l.split(","));
-
-    // Append new batch date to header row
     lines[0].push(date);
 
-    // Append each value to its corresponding row (skip header)
-    for(let i=0;i<labels.length;i++){
-      if(!lines[i+1]) lines[i+1] = [labels[i]];
-      lines[i+1].push(values[i]);
+    for (let i = 0; i < labels.length; i++) {
+      if (!lines[i + 1]) lines[i + 1] = [labels[i]];
+      lines[i + 1].push(values[i]);
     }
 
     csvRows = lines;
   } else {
     const header = ["", date];
     csvRows.push(header);
-    for(let i=0;i<labels.length;i++){
+
+    for (let i = 0; i < labels.length; i++) {
       csvRows.push([labels[i], values[i]]);
     }
   }
 
   const csvContent = csvRows.map(r => r.join(",")).join("\n");
-  const blob = new Blob([csvContent], {type:'text/csv'});
+  const blob = new Blob([csvContent], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
-  a.download = "plantain_batches.csv";
+
+  // ===== ONLY CHANGE: include YEAR =====
+  const batch = document.getElementById("batchNumber").value || "0";
+  const week = document.getElementById("weekNumber").value || "0";
+  const year = new Date().getFullYear();
+  a.download = `plantain_batch_${batch}_week_${week}_${year}.csv`;
+
   a.click();
   URL.revokeObjectURL(url);
 
-  // store in memory so next save appends correctly
   existingCSV = csvContent;
 });
 
 document.getElementById("loadCSV").addEventListener("change", (e) => {
   const file = e.target.files[0];
-  if(!file) return;
+  if (!file) return;
+
   const reader = new FileReader();
-  reader.onload = function(e){
+  reader.onload = (e) => {
     existingCSV = e.target.result;
     alert("CSV loaded. Next save will append a new column.");
   };
   reader.readAsText(file);
 });
+
+// Auto-fill ISO week
+function getISOWeekNumber(date) {
+  const temp = new Date(date.getTime());
+  temp.setHours(0,0,0,0);
+  temp.setDate(temp.getDate() + 3 - (temp.getDay() + 6) % 7);
+  const week1 = new Date(temp.getFullYear(), 0, 4);
+  return 1 + Math.round(((temp - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+
+window.addEventListener("load", () => {
+  document.getElementById("weekNumber").value = getISOWeekNumber(new Date());
+});
 </script>
+
 </body>
 </html>
