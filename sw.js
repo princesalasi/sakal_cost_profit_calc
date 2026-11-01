@@ -1,6 +1,6 @@
 // Offline support for the Sakal calculator.
 // Bump VERSION whenever index.html changes so phones pick up the new version.
-const VERSION = "sakal-v5";
+const VERSION = "sakal-v6";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {

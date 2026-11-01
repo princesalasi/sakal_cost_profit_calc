@@ -62,9 +62,10 @@ section.tab[hidden] { display: none; }
 .card { background: var(--card); border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
 .card h2 { font-size: 15px; margin: 0 0 8px; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
-.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.grid3 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px 10px; }
+.grid3 .full { grid-column: 1 / -1; }
 .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 3px; }
-.field input, .field select, .field textarea { width: 100%; padding: 8px; font-size: 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--input-bg); color: var(--text); font-family: inherit; }
+.field input, .field select, .field textarea { width: 100%; min-width: 0; max-width: 100%; padding: 8px; font-size: 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--input-bg); color: var(--text); font-family: inherit; }
 .field input.invalid { border-color: var(--bad); background: rgba(198,40,40,.08); }
 .field .hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .span2 { grid-column: span 2; }
@@ -129,7 +130,6 @@ details.pick .count { font-weight: 400; color: var(--muted); font-size: 13px; ma
 .pick-list input { width: 18px; height: 18px; accent-color: var(--brand); flex: none; }
 .pick-btns { display: flex; gap: 8px; margin-top: 8px; }
 .pick-btns button { flex: 1; }
-@media (max-width: 380px) { .grid3 { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -153,7 +153,7 @@ details.pick .count { font-weight: 400; color: var(--muted); font-size: 13px; ma
   <div class="card">
     <h2>Batch</h2>
     <div class="grid3">
-      <div class="field"><label for="date">Date</label><input id="date" type="date"></div>
+      <div class="field full"><label for="date">Date</label><input id="date" type="date"></div>
       <div class="field"><label for="batch">Batch no.</label><input id="batch" inputmode="numeric" autocomplete="off"></div>
       <div class="field"><label for="week">Week</label><input id="week" inputmode="numeric" autocomplete="off"></div>
     </div>
@@ -290,6 +290,7 @@ let settings = Object.assign({ sep: null, targetMargin: "30", year: "all" }, loa
 settings.hide = Object.assign({ csv: [], hist: [], trend: [] }, settings.hide || {});
 const shown = (group, key) => !settings.hide[group].includes(key);
 let editingId = null;
+let batchTouched = false; // true once the user types their own batch number
 
 /* ---------------- numbers ---------------- */
 // Accepts "0.70", "0,70", "1,200" (thousands), "1.200,50", "1,200.50"
@@ -439,13 +440,18 @@ function update() {
   $("barProfit").textContent = profitPct >= 18 ? "Profit " + Math.round(profitPct) + "%" : "";
 
   // suggested next batch number
-  $("batch").placeholder = editingId ? "" : nextBatchNo(r.year);
+  $("batch").placeholder = editingId ? "" : defaultBatchNo(r.date);
   store(LS_DRAFT, { form: f, editingId });
 }
 
-function nextBatchNo(year) {
-  const nums = batches.filter(b => b.year === year).map(b => parseInt(b.batch, 10)).filter(n => !isNaN(n));
-  return String(nums.length ? Math.max(...nums) + 1 : 1);
+function defaultBatchNo(dateStr, ignoreId) {
+  const d = dateFromISO(dateStr) || new Date();
+  const iw = isoWeek(d);
+  const base = String(iw.year).slice(-2) + String(iw.week).padStart(2, "0");
+  const taken = new Set(batches.filter(b => b.id !== ignoreId).map(b => String(b.batch)));
+  if (!taken.has(base)) return base;
+  let i = 2; while (taken.has(base + "-" + i)) i++;
+  return base + "-" + i;
 }
 
 function setEditing(id) {
@@ -464,7 +470,9 @@ function newBatch() {
   Object.keys(DEFAULTS).forEach(k => { if (String(f[k]).trim() === "") f[k] = DEFAULTS[k]; });
   f.date = todayISO();
   f.week = String(isoWeek(new Date()).week);
+  f.batch = defaultBatchNo(f.date);
   writeForm(f);
+  batchTouched = false;
   setEditing(null);
   update();
 }
@@ -476,7 +484,7 @@ function saveBatch() {
   }
   const r = recordFromForm(f);
   if (!r.boxes && !r.plantain) { toast("Enter at least the plantain cost or boxes produced"); return; }
-  if (!r.batch) r.batch = nextBatchNo(r.year);
+  if (!r.batch) r.batch = defaultBatchNo(r.date, editingId);
   if (editingId) {
     const i = batches.findIndex(b => b.id === editingId);
     const old = batches[i];
@@ -1023,9 +1031,11 @@ function renderAll() {
 
 document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
 ALL_FIELDS.forEach(k => $(k).addEventListener("input", update));
+$("batch").addEventListener("input", () => { batchTouched = true; });
 $("date").addEventListener("change", () => {
   const d = dateFromISO($("date").value);
   if (d) $("week").value = isoWeek(d).week;
+  if (!batchTouched && !editingId) $("batch").value = defaultBatchNo($("date").value);
   update();
 });
 $("targetMargin").addEventListener("input", () => { settings.targetMargin = $("targetMargin").value; store(LS_SETTINGS, settings); update(); });
@@ -1059,6 +1069,7 @@ $("installBtn").addEventListener("click", async () => { if (!deferredPrompt) ret
     writeForm(draft.form);
     Object.keys(DEFAULTS).forEach(k => { if (String($(k).value).trim() === "") $(k).value = DEFAULTS[k]; });
     if (!$("date").value) $("date").value = todayISO();
+    batchTouched = !!$("batch").value && $("batch").value !== defaultBatchNo($("date").value, draft.editingId);
     setEditing(draft.editingId && batches.some(b => b.id === draft.editingId) ? draft.editingId : null);
   } else {
     newBatch();
