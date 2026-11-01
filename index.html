@@ -157,6 +157,7 @@ details.pick .count { font-weight: 400; color: var(--muted); font-size: 13px; ma
       <div class="field"><label for="batch">Batch no.</label><input id="batch" inputmode="numeric" autocomplete="off"></div>
       <div class="field"><label for="week">Week</label><input id="week" inputmode="numeric" autocomplete="off"></div>
     </div>
+    <div class="field" style="margin-top:8px"><label for="notes">Notes (optional)</label><input id="notes" autocomplete="off" placeholder="e.g. plantain source, problems, customer"></div>
   </div>
 
   <div class="card">
@@ -178,18 +179,7 @@ details.pick .count { font-weight: 400; color: var(--muted); font-size: 13px; ma
     <div class="grid">
       <div class="field"><label for="boxes">Boxes produced</label><input id="boxes" inputmode="decimal"></div>
       <div class="field"><label for="perBox">Packs per box</label><input id="perBox" inputmode="decimal"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Sales</h2>
-    <div class="grid">
-      <div class="field"><label for="wsBoxes">Boxes sold wholesale</label><input id="wsBoxes" inputmode="decimal"><div class="hint">Empty = all boxes produced</div></div>
-      <div class="field"><label for="boxPrice">Wholesale price per box</label><input id="boxPrice" inputmode="decimal"></div>
-      <div class="field"><label for="retailPacks">Packs sold retail</label><input id="retailPacks" inputmode="decimal"><div class="hint">Single packs</div></div>
-      <div class="field"><label for="retailPrice">Retail price per pack</label><input id="retailPrice" inputmode="decimal"></div>
-      <div class="field span2"><label for="owed">Amount still owed by customers (sold on credit)</label><input id="owed" inputmode="decimal"></div>
-      <div class="field span2"><label for="notes">Notes (optional)</label><input id="notes" autocomplete="off" placeholder="e.g. customer names, problems, plantain source"></div>
+      <div class="field span2"><label for="boxPrice">Selling price per box</label><input id="boxPrice" inputmode="decimal"></div>
     </div>
   </div>
 
@@ -198,8 +188,6 @@ details.pick .count { font-weight: 400; color: var(--muted); font-size: 13px; ma
     <div class="banner" id="invalidMsg" hidden>Some numbers can't be read – check the red fields.</div>
     <div class="rows">
       <div class="r"><span>Total packs produced</span><span id="o_packs">0</span></div>
-      <div class="r"><span>Packs sold</span><span id="o_sold">0</span></div>
-      <div class="r" id="o_unsoldRow"><span>Unsold packs</span><span id="o_unsold">0</span></div>
       <hr>
       <div class="r"><span>Plantain</span><span id="o_plantain">0.00</span></div>
       <div class="r"><span>Oil</span><span id="o_oil">0.00</span></div>
@@ -209,19 +197,15 @@ details.pick .count { font-weight: 400; color: var(--muted); font-size: 13px; ma
       <div class="r"><span>Transportation</span><span id="o_transport">0.00</span></div>
       <hr>
       <div class="r"><span><b>Total production cost</b></span><span><b id="o_cost">0.00</b></span></div>
-      <div class="r"><span>Wholesale revenue</span><span id="o_wsRev">0.00</span></div>
-      <div class="r"><span>Retail revenue</span><span id="o_rtRev">0.00</span></div>
       <div class="r"><span><b>Total revenue</b></span><span><b id="o_rev">0.00</b></span></div>
       <div class="r big"><span>Profit</span><span id="o_profit">0.00</span></div>
       <div class="r"><span>Profit margin</span><span id="o_margin">–</span></div>
-      <div class="r"><span>Cash received</span><span id="o_cash">0.00</span></div>
-      <div class="r"><span>Still owed (credit)</span><span id="o_owed">0.00</span></div>
       <hr>
       <div class="r"><span>Cost per pack</span><span id="o_cpp">0.00</span></div>
       <div class="r"><span>Profit per pack</span><span id="o_ppp">0.00</span></div>
       <div class="r"><span>Profit per box</span><span id="o_ppb">0.00</span></div>
       <hr>
-      <div class="r"><span>Break-even (boxes at wholesale price)</span><span id="o_be">–</span></div>
+      <div class="r"><span>Break-even (boxes to sell)</span><span id="o_be">–</span></div>
       <div class="r" style="align-items:center">
         <span>Box price needed for <input id="targetMargin" inputmode="decimal" style="width:52px;padding:3px 5px;font-size:15px;border:1px solid var(--line);border-radius:5px;background:var(--input-bg);color:var(--text)" aria-label="Target margin percent">% margin</span>
         <span id="o_target">–</span>
@@ -352,11 +336,11 @@ function niceDate(s) {
 }
 
 /* ---------------- form ---------------- */
-const NUM_FIELDS = ["plantain","oilUsed","oilPrice","gasUsed","gasPrice","packPrice","boxCost","transport","boxes","perBox","boxPrice","wsBoxes","retailPacks","retailPrice","owed"];
+const NUM_FIELDS = ["plantain","oilUsed","oilPrice","gasUsed","gasPrice","packPrice","boxCost","transport","boxes","perBox","boxPrice"];
 const ALL_FIELDS = ["date","batch","week", ...NUM_FIELDS, "notes"];
 const DEFAULTS = { oilPrice: "500", gasPrice: "330", packPrice: "0.70", boxCost: "8", perBox: "48", boxPrice: "200" };
 // cleared by "New batch"; prices are kept
-const PER_BATCH = ["batch","plantain","oilUsed","gasUsed","transport","boxes","wsBoxes","retailPacks","owed","notes"];
+const PER_BATCH = ["batch","plantain","oilUsed","gasUsed","transport","boxes","notes"];
 const $ = id => document.getElementById(id);
 
 function readForm() {
@@ -370,7 +354,6 @@ function writeForm(f) {
 function recordFromForm(f) {
   const r = { date: f.date || todayISO(), batch: String(f.batch || "").trim(), week: parseInt(f.week, 10) || null, notes: (f.notes || "").trim() };
   NUM_FIELDS.forEach(k => r[k] = parseNum(f[k]));
-  r.wsBoxes = String(f.wsBoxes).trim() === "" ? null : r.wsBoxes; // null = all produced boxes
   const d = dateFromISO(r.date);
   r.year = d ? isoWeek(d).year : new Date().getFullYear();
   if (!r.week && d) r.week = isoWeek(d).week;
@@ -379,8 +362,6 @@ function recordFromForm(f) {
 function formFromRecord(r) {
   const f = { date: r.date, batch: r.batch, week: r.week ?? "", notes: r.notes || "" };
   NUM_FIELDS.forEach(k => f[k] = (r[k] === null || r[k] === undefined) ? "" : String(r2(r[k])));
-  if (r.wsBoxes === null || r.wsBoxes === undefined) f.wsBoxes = "";
-  ["retailPacks","retailPrice","owed"].forEach(k => { if (!r[k]) f[k] = ""; });
   // keep exact values for imported unit prices
   ["packPrice","boxCost","boxPrice","oilPrice","gasPrice"].forEach(k => { if (r[k]) f[k] = String(Math.round(r[k] * 10000) / 10000); });
   return f;
@@ -399,20 +380,13 @@ function compute(r) {
   c.plantain = n("plantain");
   c.transport = n("transport");
   c.totalCost = c.plantain + c.oilCost + c.gasCost + c.packCost + c.boxTotal + c.transport;
-  c.wsBoxes = (r.wsBoxes === null || r.wsBoxes === undefined) ? boxes : n("wsBoxes");
-  c.wsRev = c.wsBoxes * n("boxPrice");
-  c.rtRev = n("retailPacks") * n("retailPrice");
-  c.revenue = c.wsRev + c.rtRev;
-  c.packsSold = c.wsBoxes * perBox + n("retailPacks");
-  c.unsold = c.packs - c.packsSold;
+  c.revenue = boxes * n("boxPrice");
   c.profit = c.revenue - c.totalCost;
   c.margin = c.revenue > 0 ? c.profit / c.revenue * 100 : null;
-  c.owed = n("owed");
-  c.cash = c.revenue - c.owed;
   c.costPerPack = c.packs ? c.totalCost / c.packs : 0;
   c.profitPerPack = c.packs ? c.profit / c.packs : 0;
   c.profitPerBox = boxes ? c.profit / boxes : 0;
-  c.pricePerPackSold = c.packsSold ? c.revenue / c.packsSold : 0;
+  c.pricePerPack = perBox ? n("boxPrice") / perBox : 0;
   c.breakEvenBoxes = n("boxPrice") > 0 ? c.totalCost / n("boxPrice") : null;
   return c;
 }
@@ -438,9 +412,6 @@ function update() {
   const r = recordFromForm(f);
   const c = compute(r);
   setText("o_packs", whole(c.packs));
-  setText("o_sold", whole(c.packsSold));
-  setText("o_unsold", whole(c.unsold), c.unsold < 0 ? "neg" : "");
-  $("o_unsoldRow").title = c.unsold < 0 ? "More packs sold than produced – check the sales numbers" : "";
   setText("o_plantain", money(c.plantain));
   setText("o_oil", money(c.oilCost));
   setText("o_gas", money(c.gasCost));
@@ -448,13 +419,9 @@ function update() {
   setText("o_box", money(c.boxTotal));
   setText("o_transport", money(c.transport));
   setText("o_cost", money(c.totalCost));
-  setText("o_wsRev", money(c.wsRev));
-  setText("o_rtRev", money(c.rtRev));
   setText("o_rev", money(c.revenue));
   setText("o_profit", money(c.profit), c.profit >= 0 ? "pos" : "neg");
   setText("o_margin", c.margin === null ? "–" : nf1.format(c.margin) + " %", c.margin === null ? "" : (c.margin >= 0 ? "pos" : "neg"));
-  setText("o_cash", money(c.cash));
-  setText("o_owed", money(c.owed), c.owed > 0 ? "neg" : "");
   setText("o_cpp", money(c.costPerPack));
   setText("o_ppp", money(c.profitPerPack), c.profitPerPack >= 0 ? "pos" : "neg");
   setText("o_ppb", money(c.profitPerBox), c.profitPerBox >= 0 ? "pos" : "neg");
@@ -563,15 +530,14 @@ function tile(k, v, cls) {
 function renderHistory() {
   const list = filtered();
   const tiles = $("tiles"); tiles.innerHTML = "";
-  let rev = 0, prof = 0, owed = 0, packs = 0;
-  list.forEach(b => { const c = compute(b); rev += c.revenue; prof += c.profit; owed += c.owed; packs += c.packs; });
+  let rev = 0, prof = 0, packs = 0;
+  list.forEach(b => { const c = compute(b); rev += c.revenue; prof += c.profit; packs += c.packs; });
   const allTiles = {
     t_batches: () => tile("Batches", whole(list.length)),
     t_revenue: () => tile("Revenue (GHS)", money(rev)),
     t_profit: () => tile("Profit (GHS)", money(prof), prof >= 0 ? "pos" : "neg"),
     t_margin: () => tile("Avg. margin", rev > 0 ? nf1.format(prof / rev * 100) + " %" : "–"),
-    t_packs: () => tile("Packs produced", whole(packs)),
-    t_owed: () => tile("Still owed (GHS)", money(owed), owed > 0 ? "neg" : "")
+    t_packs: () => tile("Packs produced", whole(packs))
   };
   Object.keys(allTiles).forEach(k => { if (shown("hist", k)) tiles.append(allTiles[k]()); });
   tiles.hidden = !tiles.children.length;
@@ -587,7 +553,6 @@ function renderHistory() {
     const left = document.createElement("div");
     const t = document.createElement("div"); t.className = "t";
     t.textContent = "Batch " + (b.batch || "–") + (shown("hist", "d_week") ? " · Week " + (b.week ?? "–") : "");
-    if (c.owed > 0 && shown("hist", "d_owed")) { const bd = document.createElement("span"); bd.className = "badge"; bd.textContent = "owed " + money(c.owed); t.append(bd); }
     const s = document.createElement("div"); s.className = "s";
     const sp = [];
     if (shown("hist", "d_date")) sp.push(niceDate(b.date));
@@ -642,18 +607,17 @@ const COLS = [
   ["plantain","Plantain cost","in"],["oilUsed","Oil containers used","in"],["oilPrice","Oil price per container","in"],
   ["gasUsed","Gas cylinders used","in"],["gasPrice","Gas price per cylinder","in"],["packPrice","Packaging price per pack","in"],
   ["boxCost","Packaging box price","in"],["transport","Transportation","in"],["boxes","Boxes produced","in"],["perBox","Packs per box","in"],
-  ["wsBoxes","Boxes sold wholesale","in"],["boxPrice","Wholesale price per box","in"],["retailPacks","Packs sold retail","in"],
-  ["retailPrice","Retail price per pack","in"],["owed","Still owed (credit)","in"],["notes","Notes","in"],
+  ["boxPrice","Selling price per box","in"],["notes","Notes","in"],
   ["packs","Total packs","out"],["oilCost","Oil cost","out"],["gasCost","Gas cost","out"],["packCost","Packaging cost (packs)","out"],
   ["boxTotal","Packaging cost (boxes)","out"],["totalCost","Total cost","out"],["revenue","Revenue","out"],["profit","Profit","out"],
-  ["margin","Margin %","out"],["cash","Cash received","out"],["costPerPack","Cost per pack","out"],["profitPerPack","Profit per pack","out"],
-  ["profitPerBox","Profit per box","out"],["unsold","Unsold packs","out"],["source","Source","meta"]
+  ["margin","Margin %","out"],["costPerPack","Cost per pack","out"],["profitPerPack","Profit per pack","out"],
+  ["profitPerBox","Profit per box","out"],["source","Source","meta"]
 ];
 // Trend data section of the CSV (same values as the charts)
 const TREND_COLS = [
   ["tr_profit","Profit", c => c.profit],
   ["tr_margin","Margin %", c => c.margin],
-  ["tr_sellPack","Selling price per pack", c => c.packsSold ? c.pricePerPackSold : null],
+  ["tr_sellPack","Selling price per pack", c => c.packs ? c.pricePerPack : null],
   ["tr_costPack","Cost per pack", c => c.packs ? c.costPerPack : null],
   ["tr_oil","Oil price per container", (c, b) => b.legacy ? null : b.oilPrice],
   ["tr_gas","Gas price per cylinder", (c, b) => b.legacy ? null : b.gasPrice]
@@ -683,8 +647,8 @@ function exportCSV() {
   const yearTxt = settings.year === "all" ? "All years" : settings.year;
 
   if (doSum) {
-    let rev = 0, prof = 0, owed = 0, packs = 0, cost = 0;
-    list.forEach(b => { const c = compute(b); rev += c.revenue; prof += c.profit; owed += c.owed; packs += c.packs; cost += c.totalCost; });
+    let rev = 0, prof = 0, packs = 0, cost = 0;
+    list.forEach(b => { const c = compute(b); rev += c.revenue; prof += c.profit; packs += c.packs; cost += c.totalCost; });
     out.push(row(["SUMMARY", csvCell(yearTxt, sep)]));
     out.push(row(["Batches", list.length]));
     out.push(row([csvCell("Total cost (GHS)", sep), num(cost)]));
@@ -692,7 +656,6 @@ function exportCSV() {
     out.push(row([csvCell("Profit (GHS)", sep), num(prof)]));
     out.push(row([csvCell("Avg. margin %", sep), rev > 0 ? num(prof / rev * 100) : ""]));
     out.push(row(["Packs produced", num(packs)]));
-    out.push(row([csvCell("Still owed (GHS)", sep), num(owed)]));
     out.push("");
   }
   if (doBatches) {
@@ -704,7 +667,6 @@ function exportCSV() {
         if (k === "source") return b.legacy ? "old CSV" : "";
         if (["date","batch","notes"].includes(k)) return csvCell(b[k] || "", sep);
         if (k === "year" || k === "week") return csvCell(b[k] ?? "", sep);
-        if (k === "wsBoxes" && (b.wsBoxes === null || b.wsBoxes === undefined)) return num(b.boxes, 4);
         return csvCell(kind === "out" ? num(c[k]) : num(b[k], 4), sep);
       })));
     });
@@ -776,6 +738,7 @@ function importRows(rows, filename) {
   const header = hi >= 0 ? rows[hi].map(h => h.trim()) : [];
   if (hi >= 0) {
     const idx = {}; COLS.forEach(([k, h, kind]) => { if (kind !== "out") idx[k] = header.indexOf(h); });
+    if (idx.boxPrice < 0) idx.boxPrice = header.indexOf("Wholesale price per box"); // files from the earlier version
     for (const cells of rows.slice(hi + 1)) {
       if (cells.length < 3 || /^[A-Z ]+$/.test((cells[0] || "").trim())) break; // next section starts
       const get = k => idx[k] >= 0 ? (cells[idx[k]] ?? "") : "";
@@ -809,7 +772,7 @@ function importRows(rows, filename) {
       date: isoFromParts(dateParts), batch: (fnm && nCols === 2) ? fnm[1] : "", notes: "Imported from old CSV" + (filename ? " (" + filename + ")" : ""),
       plantain: v("Plantain Cost"), oilUsed: oil ? 1 : 0, oilPrice: oil, gasUsed: gas ? 1 : 0, gasPrice: gas,
       packPrice: packs ? pack / packs : 0, boxCost: boxes ? boxT / boxes : 0, transport: v("Transport"),
-      boxes, perBox, boxPrice: boxes ? rev / boxes : 0, wsBoxes: null, retailPacks: 0, retailPrice: 0, owed: 0, legacy: true
+      boxes, perBox, boxPrice: boxes ? rev / boxes : 0, legacy: true
     };
     const iw = isoWeek(dateFromISO(r.date));
     r.year = iw.year; r.week = (fnm && nCols === 2) ? +fnm[2] : iw.week;
@@ -968,7 +931,7 @@ function renderTrends() {
     series: [{ name: "profit", color: "var(--series-1)", values: cs.map(c => c.profit) }] });
   if (vis.cardPack) drawChart($("chPack"), { type: "line", labels, titles, fmt: ghs, aria: "Cost and selling price per pack", legend: true,
     series: [
-      on("sellPack") && { name: "selling price per pack", color: "var(--series-1)", values: cs.map(c => c.packsSold ? c.pricePerPackSold : null) },
+      on("sellPack") && { name: "selling price per pack", color: "var(--series-1)", values: cs.map(c => c.packs ? c.pricePerPack : null) },
       on("costPack") && { name: "cost per pack", color: "var(--series-2)", values: cs.map(c => c.packs ? c.costPerPack : null) }
     ].filter(Boolean) });
   const live = list.map((b, i) => ({ b, i })).filter(o => !o.b.legacy);
@@ -988,8 +951,8 @@ function renderTrends() {
 /* ---------------- "choose what to show" panels ---------------- */
 const PICKERS = {
   hist: { el: "pickHist", title: "Choose what to show", groups: [
-    ["Summary boxes", [["t_batches","Batches"],["t_revenue","Revenue"],["t_profit","Profit"],["t_margin","Avg. margin"],["t_packs","Packs produced"],["t_owed","Still owed"]]],
-    ["Batch list", [["d_week","Week"],["d_date","Date"],["d_packs","Packs"],["d_cpp","Cost per pack"],["d_cost","Total cost"],["d_profit","Profit"],["d_rev","Revenue"],["d_margin","Margin"],["d_owed","Owed badge"],["d_notes","Notes"]]]
+    ["Summary boxes", [["t_batches","Batches"],["t_revenue","Revenue"],["t_profit","Profit"],["t_margin","Avg. margin"],["t_packs","Packs produced"]]],
+    ["Batch list", [["d_week","Week"],["d_date","Date"],["d_packs","Packs"],["d_cpp","Cost per pack"],["d_cost","Total cost"],["d_profit","Profit"],["d_rev","Revenue"],["d_margin","Margin"],["d_notes","Notes"]]]
   ], onChange: () => renderHistory() },
   trend: { el: "pickTrend", title: "Choose what to show", groups: [
     ["Charts and lines", [["profit","Profit per batch"],["sellPack","Selling price per pack"],["costPack","Cost per pack"],["oil","Oil price"],["gas","Gas price"],["margin","Profit margin"]]]
