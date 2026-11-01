@@ -1,222 +1,1112 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sakal Plantain Chips Cost-Profit Calculator</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sakal Plantain Chips – Cost &amp; Profit</title>
+<meta name="theme-color" content="#1f6b2c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sakal Calc">
 <style>
-body { font-family: Arial,sans-serif; background:#f4f4f4; margin:0; padding:10px; }
-h1 { text-align:center; font-size:20px; margin-bottom:10px; color:#333; line-height:1.2; }
-.container { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-label { font-size:14px; }
-input, button { width:100%; padding:6px; font-size:16px; box-sizing:border-box; }
-input.default { color:#555; opacity:0.7; }
-.result { grid-column:span 2; background:white; padding:10px; margin-top:10px; font-size:14px; border-radius:5px; box-shadow:0 0 5px rgba(0,0,0,0.1);}
-.result p { margin:2px 0; }
-.profit { font-weight:bold; font-size:16px; }
-.bar-container { width:100%; background:#ddd; height:20px; margin-top:5px; border-radius:5px; overflow:hidden; display:flex;}
-.bar-cost { height:100%; background:red; text-align:center; color:white; font-size:12px; line-height:20px; }
-.bar-profit { height:100%; background:green; text-align:center; color:white; font-size:12px; line-height:20px; }
-button { background:green; color:white; border:none; margin-top:4px; }
-
-/* APPENDED: batch/week layout */
-.full-row { grid-column: span 2; display:flex; gap:8px; }
-.full-row div { flex:1; }
+:root {
+  color-scheme: light;
+  --bg: #f3f4f1;
+  --card: #ffffff;
+  --text: #1b1b1a;
+  --muted: #5d5c58;
+  --line: #dddcd6;
+  --input-bg: #ffffff;
+  --brand: #1f6b2c;
+  --brand-ink: #ffffff;
+  --good: #1a7f37;
+  --bad: #c62828;
+  --warn-bg: #fff4d6;
+  --warn-ink: #6b4b00;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --loss: #e34948;
+  --grid: #e7e6e1;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #121211;
+    --card: #1d1d1b;
+    --text: #f0efec;
+    --muted: #b4b3aa;
+    --line: #3a3a37;
+    --input-bg: #262624;
+    --brand: #3f9a4f;
+    --good: #5cc46e;
+    --bad: #ff6b6b;
+    --warn-bg: #3a2f10;
+    --warn-ink: #ffd98a;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --loss: #e66767;
+    --grid: #2c2c2a;
+  }
+}
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0 0 40px; }
+header { background: var(--brand); color: var(--brand-ink); padding: 12px 12px 0; position: sticky; top: 0; z-index: 10; }
+header h1 { font-size: 18px; margin: 0 0 10px; text-align: center; line-height: 1.2; }
+nav { display: flex; gap: 4px; max-width: 720px; margin: 0 auto; }
+nav button { flex: 1; background: transparent; color: var(--brand-ink); border: 0; padding: 10px 4px; font-size: 15px; border-bottom: 3px solid transparent; opacity: .8; cursor: pointer; }
+nav button[aria-selected="true"] { border-bottom-color: #fff; opacity: 1; font-weight: 600; }
+main { max-width: 720px; margin: 0 auto; padding: 10px; }
+section.tab[hidden] { display: none; }
+.card { background: var(--card); border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.card h2 { font-size: 15px; margin: 0 0 8px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 3px; }
+.field input, .field select, .field textarea { width: 100%; padding: 8px; font-size: 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--input-bg); color: var(--text); font-family: inherit; }
+.field input.invalid { border-color: var(--bad); background: rgba(198,40,40,.08); }
+.field .hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.span2 { grid-column: span 2; }
+button.btn { padding: 11px 12px; font-size: 16px; border-radius: 8px; border: 0; background: var(--brand); color: var(--brand-ink); cursor: pointer; font-weight: 600; }
+button.btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); font-weight: 500; }
+button.btn.small { padding: 6px 10px; font-size: 14px; }
+button.btn.danger { background: transparent; color: var(--bad); border: 1px solid var(--line); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.actions > * { flex: 1; }
+.banner { background: var(--warn-bg); color: var(--warn-ink); border-radius: 8px; padding: 8px 10px; font-size: 14px; margin-bottom: 10px; display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.banner[hidden] { display: none; }
+.rows { font-size: 14px; }
+.rows .r { display: flex; justify-content: space-between; padding: 3px 0; gap: 10px; }
+.rows .r span:last-child { font-variant-numeric: tabular-nums; text-align: right; }
+.rows hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+.rows .big { font-size: 17px; font-weight: 700; }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+.muted { color: var(--muted); }
+.bar-container { width: 100%; background: var(--line); height: 22px; margin-top: 8px; border-radius: 6px; overflow: hidden; display: flex; }
+.bar-cost, .bar-profit { height: 100%; color: #fff; font-size: 12px; line-height: 22px; text-align: center; white-space: nowrap; overflow: hidden; }
+.bar-cost { background: var(--bad); } .bar-profit { background: var(--good); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.tile { background: var(--card); border-radius: 10px; padding: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.tile .k { font-size: 12px; color: var(--muted); }
+.tile .v { font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.batch { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; border-top: 1px solid var(--line); padding: 10px 0; }
+.batch:first-child { border-top: 0; }
+.batch .t { font-weight: 600; }
+.batch .s { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.batch .p { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.badge { display: inline-block; font-size: 12px; padding: 1px 6px; border-radius: 10px; background: var(--warn-bg); color: var(--warn-ink); margin-left: 4px; font-weight: 500; }
+.batch .btns { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
+.toolbar { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; margin-bottom: 10px; }
+.toolbar .field { flex: 1; min-width: 140px; }
+.empty { text-align: center; color: var(--muted); padding: 24px 8px; }
+#toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; max-width: 90vw; text-align: center; }
+#toast.show { opacity: 1; }
+/* charts */
+.chart-wrap { position: relative; }
+.chart-wrap svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.chart-wrap .axis text { fill: var(--muted); font-size: 11px; }
+.legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin-bottom: 4px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+.tip { position: absolute; pointer-events: none; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.15); white-space: nowrap; z-index: 5; }
+.tip[hidden] { display: none; }
+.tip .h { color: var(--muted); margin-bottom: 3px; }
+.tip .row { display: flex; align-items: center; gap: 6px; }
+.tip .row i { width: 12px; height: 2px; display: inline-block; border-radius: 2px; }
+.tip strong { font-variant-numeric: tabular-nums; }
+.note { font-size: 13px; color: var(--muted); }
+details.pick { margin-bottom: 10px; }
+details.pick > summary { cursor: pointer; font-weight: 600; font-size: 15px; padding: 2px 0; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+details.pick > summary::-webkit-details-marker { display: none; }
+details.pick > summary::after { content: "▾"; color: var(--muted); }
+details.pick[open] > summary::after { content: "▴"; }
+details.pick .count { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: auto; margin-right: 8px; }
+.pick-group { margin-top: 8px; }
+.pick-group.off { opacity: .45; }
+.pick-group h3 { font-size: 13px; color: var(--muted); margin: 8px 0 4px; font-weight: 600; }
+.pick-list { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; }
+.pick-list label { display: flex; gap: 8px; align-items: center; font-size: 14px; padding: 5px 0; cursor: pointer; }
+.pick-list input { width: 18px; height: 18px; accent-color: var(--brand); flex: none; }
+.pick-btns { display: flex; gap: 8px; margin-top: 8px; }
+.pick-btns button { flex: 1; }
+@media (max-width: 380px) { .grid3 { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
-
 <body>
-<h1>Sakal Plantain Chips<br>Cost-Profit Calculator</h1>
+<header>
+  <h1>Sakal Plantain Chips · Cost &amp; Profit</h1>
+  <nav role="tablist">
+    <button role="tab" data-tab="calc" aria-selected="true">Calculator</button>
+    <button role="tab" data-tab="history" aria-selected="false">History</button>
+    <button role="tab" data-tab="trends" aria-selected="false">Trends</button>
+  </nav>
+</header>
 
-<div class="container">
+<main>
+<!-- ================= CALCULATOR ================= -->
+<section class="tab" id="tab-calc">
+  <div class="banner" id="editBanner" hidden>
+    <span id="editText">Editing batch</span>
+    <button class="btn small secondary" id="cancelEdit" type="button">Cancel</button>
+  </div>
 
-  <!-- APPENDED: Batch + Week -->
-  <div class="full-row">
-    <div>
-      <label>Batch Number</label>
-      <input id="batchNumber">
-    </div>
-    <div>
-      <label>Week Number</label>
-      <input id="weekNumber">
+  <div class="card">
+    <h2>Batch</h2>
+    <div class="grid3">
+      <div class="field"><label for="date">Date</label><input id="date" type="date"></div>
+      <div class="field"><label for="batch">Batch no.</label><input id="batch" inputmode="numeric" autocomplete="off"></div>
+      <div class="field"><label for="week">Week</label><input id="week" inputmode="numeric" autocomplete="off"></div>
     </div>
   </div>
 
-  <label>Total price of plantain (GHS)</label><input id="plantain">
-  <label>Oil containers used</label><input id="oilUsed">
-  <label>Price of one oil container (GHS)</label><input id="oilPrice" value="500" class="default">
-  <label>Gas cylinders used</label><input id="gasUsed">
-  <label>Price of one gas cylinder (GHS)</label><input id="gasPrice" value="330" class="default">
-  <label>Packaging price per pack</label><input id="packPrice" value="0.70" class="default">
-  <label>Packaging box price</label><input id="boxCost" value="8" class="default">
-  <label>Transportation cost</label><input id="transport">
-  <label>Number of boxes produced</label><input id="boxes">
-  <label>Packages per box</label><input id="perBox" value="48" class="default">
-  <label>Selling price per box</label><input id="boxPrice" value="200" class="default">
+  <div class="card">
+    <h2>Production costs (GHS)</h2>
+    <div class="grid">
+      <div class="field span2"><label for="plantain">Total price of plantain</label><input id="plantain" inputmode="decimal"></div>
+      <div class="field"><label for="oilUsed">Oil containers used</label><input id="oilUsed" inputmode="decimal"></div>
+      <div class="field"><label for="oilPrice">Price per oil container</label><input id="oilPrice" inputmode="decimal"></div>
+      <div class="field"><label for="gasUsed">Gas cylinders used</label><input id="gasUsed" inputmode="decimal"></div>
+      <div class="field"><label for="gasPrice">Price per gas cylinder</label><input id="gasPrice" inputmode="decimal"></div>
+      <div class="field"><label for="packPrice">Packaging price per pack</label><input id="packPrice" inputmode="decimal"></div>
+      <div class="field"><label for="boxCost">Packaging box price</label><input id="boxCost" inputmode="decimal"></div>
+      <div class="field span2"><label for="transport">Transportation cost</label><input id="transport" inputmode="decimal"></div>
+    </div>
+  </div>
 
-  <button id="saveCSV">Save CSV</button>
-  <input type="file" id="loadCSV" accept=".csv">
+  <div class="card">
+    <h2>Output</h2>
+    <div class="grid">
+      <div class="field"><label for="boxes">Boxes produced</label><input id="boxes" inputmode="decimal"></div>
+      <div class="field"><label for="perBox">Packs per box</label><input id="perBox" inputmode="decimal"></div>
+    </div>
+  </div>
 
-  <div class="result">
-    <p>Total Packages: <span id="packages">0</span></p><hr>
-    <p>Oil Cost: GHS <span id="oilCost">0</span></p>
-    <p>Gas Cost: GHS <span id="gasCost">0</span></p>
-    <p>Packaging Cost: GHS <span id="packCost">0</span></p>
-    <p>Box Cost: GHS <span id="boxTotal">0</span></p>
-    <p>Transportation: GHS <span id="transportCost">0</span></p><hr>
-    <p>Total Production Cost: GHS <span id="cost">0</span></p>
-    <p>Total Revenue: GHS <span id="revenue">0</span></p>
-    <p class="profit">Profit: GHS <span id="profit">0</span></p>
-    <p>Cost per Pack: GHS <span id="costPerPack">0</span></p>
-    <p>Profit per Pack: GHS <span id="profitPerPack">0</span></p>
-    <p>Profit per Box: GHS <span id="profitPerBox">0</span></p>
+  <div class="card">
+    <h2>Sales</h2>
+    <div class="grid">
+      <div class="field"><label for="wsBoxes">Boxes sold wholesale</label><input id="wsBoxes" inputmode="decimal"><div class="hint">Empty = all boxes produced</div></div>
+      <div class="field"><label for="boxPrice">Wholesale price per box</label><input id="boxPrice" inputmode="decimal"></div>
+      <div class="field"><label for="retailPacks">Packs sold retail</label><input id="retailPacks" inputmode="decimal"><div class="hint">Single packs</div></div>
+      <div class="field"><label for="retailPrice">Retail price per pack</label><input id="retailPrice" inputmode="decimal"></div>
+      <div class="field span2"><label for="owed">Amount still owed by customers (sold on credit)</label><input id="owed" inputmode="decimal"></div>
+      <div class="field span2"><label for="notes">Notes (optional)</label><input id="notes" autocomplete="off" placeholder="e.g. customer names, problems, plantain source"></div>
+    </div>
+  </div>
 
-    <div class="bar-container">
+  <div class="card">
+    <h2>Results</h2>
+    <div class="banner" id="invalidMsg" hidden>Some numbers can't be read – check the red fields.</div>
+    <div class="rows">
+      <div class="r"><span>Total packs produced</span><span id="o_packs">0</span></div>
+      <div class="r"><span>Packs sold</span><span id="o_sold">0</span></div>
+      <div class="r" id="o_unsoldRow"><span>Unsold packs</span><span id="o_unsold">0</span></div>
+      <hr>
+      <div class="r"><span>Plantain</span><span id="o_plantain">0.00</span></div>
+      <div class="r"><span>Oil</span><span id="o_oil">0.00</span></div>
+      <div class="r"><span>Gas</span><span id="o_gas">0.00</span></div>
+      <div class="r"><span>Packaging (packs)</span><span id="o_pack">0.00</span></div>
+      <div class="r"><span>Packaging (boxes)</span><span id="o_box">0.00</span></div>
+      <div class="r"><span>Transportation</span><span id="o_transport">0.00</span></div>
+      <hr>
+      <div class="r"><span><b>Total production cost</b></span><span><b id="o_cost">0.00</b></span></div>
+      <div class="r"><span>Wholesale revenue</span><span id="o_wsRev">0.00</span></div>
+      <div class="r"><span>Retail revenue</span><span id="o_rtRev">0.00</span></div>
+      <div class="r"><span><b>Total revenue</b></span><span><b id="o_rev">0.00</b></span></div>
+      <div class="r big"><span>Profit</span><span id="o_profit">0.00</span></div>
+      <div class="r"><span>Profit margin</span><span id="o_margin">–</span></div>
+      <div class="r"><span>Cash received</span><span id="o_cash">0.00</span></div>
+      <div class="r"><span>Still owed (credit)</span><span id="o_owed">0.00</span></div>
+      <hr>
+      <div class="r"><span>Cost per pack</span><span id="o_cpp">0.00</span></div>
+      <div class="r"><span>Profit per pack</span><span id="o_ppp">0.00</span></div>
+      <div class="r"><span>Profit per box</span><span id="o_ppb">0.00</span></div>
+      <hr>
+      <div class="r"><span>Break-even (boxes at wholesale price)</span><span id="o_be">–</span></div>
+      <div class="r" style="align-items:center">
+        <span>Box price needed for <input id="targetMargin" inputmode="decimal" style="width:52px;padding:3px 5px;font-size:15px;border:1px solid var(--line);border-radius:5px;background:var(--input-bg);color:var(--text)" aria-label="Target margin percent">% margin</span>
+        <span id="o_target">–</span>
+      </div>
+    </div>
+    <div class="bar-container" aria-hidden="true">
       <div class="bar-cost" id="barCost"></div>
       <div class="bar-profit" id="barProfit"></div>
     </div>
+    <div class="note" style="margin-top:4px">Red = cost, green = profit (share of revenue). All amounts in GHS.</div>
   </div>
-</div>
+
+  <div class="actions">
+    <button class="btn" id="saveBtn" type="button">Save batch</button>
+    <button class="btn secondary" id="newBtn" type="button">New batch</button>
+  </div>
+</section>
+
+<!-- ================= HISTORY ================= -->
+<section class="tab" id="tab-history" hidden>
+  <div class="toolbar">
+    <div class="field"><label for="yearFilterH">Year</label><select id="yearFilterH" class="yearFilter"></select></div>
+  </div>
+  <details class="card pick" id="pickHist"></details>
+  <div class="tiles" id="tiles"></div>
+  <div class="card" id="batchList"></div>
+  <div class="card">
+    <h2>Backup &amp; Excel</h2>
+    <div class="toolbar">
+      <div class="field"><label for="sep">CSV format</label>
+        <select id="sep">
+          <option value=",">Comma – English Excel / Google Sheets</option>
+          <option value=";">Semicolon – German/European Excel</option>
+        </select>
+      </div>
+    </div>
+    <details class="pick" id="pickCsv"></details>
+    <div class="actions">
+      <button class="btn secondary" id="exportBtn" type="button">Export CSV</button>
+      <button class="btn secondary" id="importBtn" type="button">Import CSV</button>
+      <input type="file" id="importFile" accept=".csv,text/csv" hidden>
+    </div>
+    <p class="note">Batches are saved on this phone/browser only. Export a CSV regularly as a backup. Import also accepts the CSV files from the old version of this calculator. To be able to import a backup again later, keep “Batch history” and all its “batch details” columns ticked.</p>
+    <p class="note" id="installRow" hidden><button class="btn small" id="installBtn" type="button">Install as app</button> Works offline once installed.</p>
+  </div>
+</section>
+
+<!-- ================= TRENDS ================= -->
+<section class="tab" id="tab-trends" hidden>
+  <div class="toolbar">
+    <div class="field"><label for="yearFilterT">Year</label><select id="yearFilterT" class="yearFilter"></select></div>
+  </div>
+  <details class="card pick" id="pickTrend"></details>
+  <div id="trendsEmpty" class="card empty" hidden>Save at least 2 batches to see trends.</div>
+  <div id="trendsBody">
+    <div class="card" id="cardProfit"><h2>Profit per batch (GHS)</h2><div class="chart-wrap" id="chProfit"></div></div>
+    <div class="card" id="cardPack"><h2>Cost vs. selling price per pack (GHS)</h2><div class="chart-wrap" id="chPack"></div></div>
+    <div class="card" id="cardInputs"><h2>Oil &amp; gas prices (GHS)</h2><div class="chart-wrap" id="chInputs"></div><p class="note" id="legacyNote" hidden>Batches imported from old CSV files are left out of this chart (they have no unit prices).</p></div>
+    <div class="card" id="cardMargin"><h2>Profit margin (%)</h2><div class="chart-wrap" id="chMargin"></div></div>
+  </div>
+  <div id="trendsNone" class="card empty" hidden>No charts selected. Open “Choose what to show” to pick some.</div>
+</section>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
-let existingCSV = null;
+"use strict";
+/* ---------------- storage ---------------- */
+const LS_BATCHES = "sakal.batches.v1";
+const LS_DRAFT = "sakal.draft.v1";
+const LS_SETTINGS = "sakal.settings.v1";
+function load(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
+}
+function store(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { toast("Could not save – storage is full or blocked"); return false; }
+}
+let batches = load(LS_BATCHES, []);
+let settings = Object.assign({ sep: null, targetMargin: "30", year: "all" }, load(LS_SETTINGS, {}));
+// Things the user switched OFF (so anything new is shown by default)
+settings.hide = Object.assign({ csv: [], hist: [], trend: [] }, settings.hide || {});
+const shown = (group, key) => !settings.hide[group].includes(key);
+let editingId = null;
 
-const labels = [
-"Plantain Cost","Oil Cost","Gas Cost","Packaging Cost","Box Cost",
-"Transport","Total Cost","Revenue","Profit",
-"Cost per Pack","Profit per Pack","Profit per Box"
-];
+/* ---------------- numbers ---------------- */
+// Accepts "0.70", "0,70", "1,200" (thousands), "1.200,50", "1,200.50"
+function parseNum(raw) {
+  if (raw === null || raw === undefined) return 0;
+  let s = String(raw).trim().replace(/\s/g, "").replace(/^GHS/i, "");
+  if (s === "") return 0;
+  const hasC = s.includes(","), hasD = s.includes(".");
+  if (hasC && hasD) {
+    if (s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g, "").replace(",", ".");
+    else s = s.replace(/,/g, "");
+  } else if (hasC) {
+    s = /^-?\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g, "") : s.replace(",", ".");
+  }
+  if (!/^-?\d*\.?\d+$/.test(s) && !/^-?\d+\.$/.test(s)) return NaN;
+  return Number(s);
+}
+const nf2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nf0 = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+const nf1 = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
+const money = n => (isFinite(n) ? nf2.format(n) : "–");
+const whole = n => (isFinite(n) ? nf0.format(n) : "–");
+const r2 = n => Math.round(n * 100) / 100;
 
-function calculate() {
-  const plantain = Number(document.getElementById("plantain").value);
-  const oilUsed = Number(document.getElementById("oilUsed").value);
-  const oilPrice = Number(document.getElementById("oilPrice").value);
-  const gasUsed = Number(document.getElementById("gasUsed").value);
-  const gasPrice = Number(document.getElementById("gasPrice").value);
-  const packPrice = Number(document.getElementById("packPrice").value);
-  const boxCost = Number(document.getElementById("boxCost").value);
-  const transport = Number(document.getElementById("transport").value);
-  const boxes = Number(document.getElementById("boxes").value);
-  const perBox = Number(document.getElementById("perBox").value);
-  const boxPrice = Number(document.getElementById("boxPrice").value);
-
-  const oilCost = oilUsed * oilPrice;
-  const gasCost = gasUsed * gasPrice;
-  const totalPackages = boxes * perBox;
-  const packagingCost = totalPackages * packPrice;
-  const boxTotal = boxes * boxCost;
-  const totalCost = plantain + oilCost + gasCost + packagingCost + boxTotal + transport;
-  const revenue = boxes * boxPrice;
-  const profit = revenue - totalCost;
-  const costPerPack = totalPackages ? totalCost / totalPackages : 0;
-  const profitPerPack = totalPackages ? profit / totalPackages : 0;
-  const profitPerBox = boxes ? profit / boxes : 0;
-
-  document.getElementById("packages").innerText = totalPackages;
-  document.getElementById("oilCost").innerText = oilCost.toFixed(2);
-  document.getElementById("gasCost").innerText = gasCost.toFixed(2);
-  document.getElementById("packCost").innerText = packagingCost.toFixed(2);
-  document.getElementById("boxTotal").innerText = boxTotal.toFixed(2);
-  document.getElementById("transportCost").innerText = transport.toFixed(2);
-  document.getElementById("cost").innerText = totalCost.toFixed(2);
-  document.getElementById("revenue").innerText = revenue.toFixed(2);
-
-  const profitEl = document.getElementById("profit");
-  profitEl.innerText = profit.toFixed(2);
-  profitEl.style.color = profit >= 0 ? "green" : "red";
-
-  document.getElementById("costPerPack").innerText = costPerPack.toFixed(2);
-  document.getElementById("profitPerPack").innerText = profitPerPack.toFixed(2);
-  document.getElementById("profitPerBox").innerText = profitPerBox.toFixed(2);
-
-  const total = Math.max(totalCost, revenue);
-  document.getElementById("barCost").style.width = (totalCost / total * 100) + "%";
-  document.getElementById("barProfit").style.width = (profit > 0 ? profit / total * 100 : 0) + "%";
+/* ---------------- dates ---------------- */
+function isoWeek(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return { week: Math.ceil(((t - y0) / 86400000 + 1) / 7), year: t.getUTCFullYear() };
+}
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function dateFromISO(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+}
+function niceDate(s) {
+  const d = dateFromISO(s);
+  return d ? d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : (s || "");
 }
 
-document.querySelectorAll("input").forEach(i => i.addEventListener("input", calculate));
+/* ---------------- form ---------------- */
+const NUM_FIELDS = ["plantain","oilUsed","oilPrice","gasUsed","gasPrice","packPrice","boxCost","transport","boxes","perBox","boxPrice","wsBoxes","retailPacks","retailPrice","owed"];
+const ALL_FIELDS = ["date","batch","week", ...NUM_FIELDS, "notes"];
+const DEFAULTS = { oilPrice: "500", gasPrice: "330", packPrice: "0.70", boxCost: "8", perBox: "48", boxPrice: "200" };
+// cleared by "New batch"; prices are kept
+const PER_BATCH = ["batch","plantain","oilUsed","gasUsed","transport","boxes","wsBoxes","retailPacks","owed","notes"];
+const $ = id => document.getElementById(id);
 
-document.getElementById("saveCSV").addEventListener("click", () => {
-  const date = new Date().toLocaleDateString();
+function readForm() {
+  const f = {};
+  ALL_FIELDS.forEach(k => f[k] = $(k).value);
+  return f;
+}
+function writeForm(f) {
+  ALL_FIELDS.forEach(k => { $(k).value = f[k] ?? ""; });
+}
+function recordFromForm(f) {
+  const r = { date: f.date || todayISO(), batch: String(f.batch || "").trim(), week: parseInt(f.week, 10) || null, notes: (f.notes || "").trim() };
+  NUM_FIELDS.forEach(k => r[k] = parseNum(f[k]));
+  r.wsBoxes = String(f.wsBoxes).trim() === "" ? null : r.wsBoxes; // null = all produced boxes
+  const d = dateFromISO(r.date);
+  r.year = d ? isoWeek(d).year : new Date().getFullYear();
+  if (!r.week && d) r.week = isoWeek(d).week;
+  return r;
+}
+function formFromRecord(r) {
+  const f = { date: r.date, batch: r.batch, week: r.week ?? "", notes: r.notes || "" };
+  NUM_FIELDS.forEach(k => f[k] = (r[k] === null || r[k] === undefined) ? "" : String(r2(r[k])));
+  if (r.wsBoxes === null || r.wsBoxes === undefined) f.wsBoxes = "";
+  ["retailPacks","retailPrice","owed"].forEach(k => { if (!r[k]) f[k] = ""; });
+  // keep exact values for imported unit prices
+  ["packPrice","boxCost","boxPrice","oilPrice","gasPrice"].forEach(k => { if (r[k]) f[k] = String(Math.round(r[k] * 10000) / 10000); });
+  return f;
+}
 
-  const values = [
-    document.getElementById("plantain").value || 0,
-    document.getElementById("oilCost").innerText,
-    document.getElementById("gasCost").innerText,
-    document.getElementById("packCost").innerText,
-    document.getElementById("boxTotal").innerText,
-    document.getElementById("transportCost").innerText,
-    document.getElementById("cost").innerText,
-    document.getElementById("revenue").innerText,
-    document.getElementById("profit").innerText,
-    document.getElementById("costPerPack").innerText,
-    document.getElementById("profitPerPack").innerText,
-    document.getElementById("profitPerBox").innerText
-  ];
+/* ---------------- calculation ---------------- */
+function compute(r) {
+  const n = k => (isFinite(r[k]) ? Number(r[k]) || 0 : 0);
+  const boxes = n("boxes"), perBox = n("perBox");
+  const c = {};
+  c.oilCost = n("oilUsed") * n("oilPrice");
+  c.gasCost = n("gasUsed") * n("gasPrice");
+  c.packs = boxes * perBox;
+  c.packCost = c.packs * n("packPrice");
+  c.boxTotal = boxes * n("boxCost");
+  c.plantain = n("plantain");
+  c.transport = n("transport");
+  c.totalCost = c.plantain + c.oilCost + c.gasCost + c.packCost + c.boxTotal + c.transport;
+  c.wsBoxes = (r.wsBoxes === null || r.wsBoxes === undefined) ? boxes : n("wsBoxes");
+  c.wsRev = c.wsBoxes * n("boxPrice");
+  c.rtRev = n("retailPacks") * n("retailPrice");
+  c.revenue = c.wsRev + c.rtRev;
+  c.packsSold = c.wsBoxes * perBox + n("retailPacks");
+  c.unsold = c.packs - c.packsSold;
+  c.profit = c.revenue - c.totalCost;
+  c.margin = c.revenue > 0 ? c.profit / c.revenue * 100 : null;
+  c.owed = n("owed");
+  c.cash = c.revenue - c.owed;
+  c.costPerPack = c.packs ? c.totalCost / c.packs : 0;
+  c.profitPerPack = c.packs ? c.profit / c.packs : 0;
+  c.profitPerBox = boxes ? c.profit / boxes : 0;
+  c.pricePerPackSold = c.packsSold ? c.revenue / c.packsSold : 0;
+  c.breakEvenBoxes = n("boxPrice") > 0 ? c.totalCost / n("boxPrice") : null;
+  return c;
+}
+function targetBoxPrice(c, boxes, m) {
+  if (!(boxes > 0) || !(m < 100) || !isFinite(m)) return null;
+  return c.totalCost / (1 - m / 100) / boxes;
+}
 
-  let csvRows = [];
+function setText(id, txt, cls) {
+  const el = $(id); el.textContent = txt;
+  if (cls !== undefined) { el.classList.remove("pos","neg"); if (cls) el.classList.add(cls); }
+}
+function update() {
+  const f = readForm();
+  let invalid = false;
+  NUM_FIELDS.forEach(k => {
+    const v = parseNum(f[k]);
+    const bad = isNaN(v) || v < 0;
+    $(k).classList.toggle("invalid", bad);
+    if (bad) invalid = true;
+  });
+  $("invalidMsg").hidden = !invalid;
+  const r = recordFromForm(f);
+  const c = compute(r);
+  setText("o_packs", whole(c.packs));
+  setText("o_sold", whole(c.packsSold));
+  setText("o_unsold", whole(c.unsold), c.unsold < 0 ? "neg" : "");
+  $("o_unsoldRow").title = c.unsold < 0 ? "More packs sold than produced – check the sales numbers" : "";
+  setText("o_plantain", money(c.plantain));
+  setText("o_oil", money(c.oilCost));
+  setText("o_gas", money(c.gasCost));
+  setText("o_pack", money(c.packCost));
+  setText("o_box", money(c.boxTotal));
+  setText("o_transport", money(c.transport));
+  setText("o_cost", money(c.totalCost));
+  setText("o_wsRev", money(c.wsRev));
+  setText("o_rtRev", money(c.rtRev));
+  setText("o_rev", money(c.revenue));
+  setText("o_profit", money(c.profit), c.profit >= 0 ? "pos" : "neg");
+  setText("o_margin", c.margin === null ? "–" : nf1.format(c.margin) + " %", c.margin === null ? "" : (c.margin >= 0 ? "pos" : "neg"));
+  setText("o_cash", money(c.cash));
+  setText("o_owed", money(c.owed), c.owed > 0 ? "neg" : "");
+  setText("o_cpp", money(c.costPerPack));
+  setText("o_ppp", money(c.profitPerPack), c.profitPerPack >= 0 ? "pos" : "neg");
+  setText("o_ppb", money(c.profitPerBox), c.profitPerBox >= 0 ? "pos" : "neg");
+  setText("o_be", c.breakEvenBoxes === null || c.totalCost === 0 ? "–" : nf1.format(c.breakEvenBoxes) + " boxes");
+  const m = parseNum($("targetMargin").value);
+  const tp = targetBoxPrice(c, r.boxes, m);
+  setText("o_target", tp === null ? "–" : "GHS " + money(tp));
 
-  if (existingCSV) {
-    let lines = existingCSV.trim().split("\n").map(l => l.split(","));
-    lines[0].push(date);
+  const total = Math.max(c.totalCost, c.revenue);
+  const costPct = total > 0 ? Math.min(c.totalCost, c.revenue || c.totalCost) / total * 100 : 0;
+  const profitPct = total > 0 && c.profit > 0 ? c.profit / total * 100 : 0;
+  $("barCost").style.width = costPct + "%";
+  $("barProfit").style.width = profitPct + "%";
+  $("barCost").textContent = costPct >= 18 ? "Cost " + Math.round(costPct) + "%" : "";
+  $("barProfit").textContent = profitPct >= 18 ? "Profit " + Math.round(profitPct) + "%" : "";
 
-    for (let i = 0; i < labels.length; i++) {
-      if (!lines[i + 1]) lines[i + 1] = [labels[i]];
-      lines[i + 1].push(values[i]);
-    }
+  // suggested next batch number
+  $("batch").placeholder = editingId ? "" : nextBatchNo(r.year);
+  store(LS_DRAFT, { form: f, editingId });
+}
 
-    csvRows = lines;
+function nextBatchNo(year) {
+  const nums = batches.filter(b => b.year === year).map(b => parseInt(b.batch, 10)).filter(n => !isNaN(n));
+  return String(nums.length ? Math.max(...nums) + 1 : 1);
+}
+
+function setEditing(id) {
+  editingId = id;
+  const b = batches.find(x => x.id === id);
+  $("editBanner").hidden = !b;
+  if (b) {
+    $("editText").textContent = "Editing batch " + (b.batch || "–") + " (" + niceDate(b.date) + ")" + (b.legacy ? " · imported from old CSV: oil & gas are stored as totals" : "");
+  }
+  $("saveBtn").textContent = b ? "Update batch" : "Save batch";
+}
+
+function newBatch() {
+  const f = readForm();
+  PER_BATCH.forEach(k => f[k] = "");
+  Object.keys(DEFAULTS).forEach(k => { if (String(f[k]).trim() === "") f[k] = DEFAULTS[k]; });
+  f.date = todayISO();
+  f.week = String(isoWeek(new Date()).week);
+  writeForm(f);
+  setEditing(null);
+  update();
+}
+
+function saveBatch() {
+  const f = readForm();
+  if (NUM_FIELDS.some(k => { const v = parseNum(f[k]); return isNaN(v) || v < 0; })) {
+    toast("Fix the red fields first"); return;
+  }
+  const r = recordFromForm(f);
+  if (!r.boxes && !r.plantain) { toast("Enter at least the plantain cost or boxes produced"); return; }
+  if (!r.batch) r.batch = nextBatchNo(r.year);
+  if (editingId) {
+    const i = batches.findIndex(b => b.id === editingId);
+    const old = batches[i];
+    r.id = editingId; r.created = old ? old.created : Date.now();
+    if (old && old.legacy) r.legacy = true;
+    if (i >= 0) batches[i] = r; else batches.push(r);
   } else {
-    const header = ["", date];
-    csvRows.push(header);
-
-    for (let i = 0; i < labels.length; i++) {
-      csvRows.push([labels[i], values[i]]);
+    const dup = batches.findIndex(b => b.year === r.year && String(b.batch) === r.batch);
+    if (dup >= 0) {
+      if (!confirm("Batch " + r.batch + " of " + r.year + " already exists. Replace it?")) return;
+      r.id = batches[dup].id; r.created = batches[dup].created;
+      batches[dup] = r;
+    } else {
+      r.id = "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      r.created = Date.now();
+      batches.push(r);
     }
   }
-
-  const csvContent = csvRows.map(r => r.join(",")).join("\n");
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-
-  // ===== ONLY CHANGE: include YEAR =====
-  const batch = document.getElementById("batchNumber").value || "0";
-  const week = document.getElementById("weekNumber").value || "0";
-  const year = new Date().getFullYear();
-  a.download = `plantain_batch_${batch}_week_${week}_${year}.csv`;
-
-  a.click();
-  URL.revokeObjectURL(url);
-
-  existingCSV = csvContent;
-});
-
-document.getElementById("loadCSV").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    existingCSV = e.target.result;
-    alert("CSV loaded. Next save will append a new column.");
-  };
-  reader.readAsText(file);
-});
-
-// Auto-fill ISO week
-function getISOWeekNumber(date) {
-  const temp = new Date(date.getTime());
-  temp.setHours(0,0,0,0);
-  temp.setDate(temp.getDate() + 3 - (temp.getDay() + 6) % 7);
-  const week1 = new Date(temp.getFullYear(), 0, 4);
-  return 1 + Math.round(((temp - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+  r.updated = Date.now();
+  if (!store(LS_BATCHES, batches)) return;
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  toast("Batch " + r.batch + " saved – see History");
+  newBatch();
+  renderAll();
 }
 
-window.addEventListener("load", () => {
-  document.getElementById("weekNumber").value = getISOWeekNumber(new Date());
-});
-</script>
+/* ---------------- history ---------------- */
+function sortedBatches(list) {
+  return list.slice().sort((a, b) => (a.date || "").localeCompare(b.date || "") || (parseInt(a.batch, 10) || 0) - (parseInt(b.batch, 10) || 0) || (a.created || 0) - (b.created || 0));
+}
+function filtered() {
+  const y = settings.year;
+  return sortedBatches(y === "all" ? batches : batches.filter(b => String(b.year) === y));
+}
+function renderYearFilters() {
+  const years = [...new Set(batches.map(b => b.year))].sort((a, b) => b - a);
+  if (settings.year !== "all" && !years.map(String).includes(settings.year)) settings.year = "all";
+  document.querySelectorAll(".yearFilter").forEach(sel => {
+    sel.innerHTML = "";
+    const all = new Option("All years", "all"); sel.add(all);
+    years.forEach(y => sel.add(new Option(String(y), String(y))));
+    sel.value = settings.year;
+  });
+}
+function tile(k, v, cls) {
+  const d = document.createElement("div"); d.className = "tile";
+  const a = document.createElement("div"); a.className = "k"; a.textContent = k;
+  const b = document.createElement("div"); b.className = "v" + (cls ? " " + cls : ""); b.textContent = v;
+  d.append(a, b); return d;
+}
+function renderHistory() {
+  const list = filtered();
+  const tiles = $("tiles"); tiles.innerHTML = "";
+  let rev = 0, prof = 0, owed = 0, packs = 0;
+  list.forEach(b => { const c = compute(b); rev += c.revenue; prof += c.profit; owed += c.owed; packs += c.packs; });
+  const allTiles = {
+    t_batches: () => tile("Batches", whole(list.length)),
+    t_revenue: () => tile("Revenue (GHS)", money(rev)),
+    t_profit: () => tile("Profit (GHS)", money(prof), prof >= 0 ? "pos" : "neg"),
+    t_margin: () => tile("Avg. margin", rev > 0 ? nf1.format(prof / rev * 100) + " %" : "–"),
+    t_packs: () => tile("Packs produced", whole(packs)),
+    t_owed: () => tile("Still owed (GHS)", money(owed), owed > 0 ? "neg" : "")
+  };
+  Object.keys(allTiles).forEach(k => { if (shown("hist", k)) tiles.append(allTiles[k]()); });
+  tiles.hidden = !tiles.children.length;
+  const box = $("batchList"); box.innerHTML = "";
+  if (!list.length) {
+    const e = document.createElement("div"); e.className = "empty";
+    e.textContent = batches.length ? "No batches in this year." : "No saved batches yet. Fill in the calculator and tap “Save batch”.";
+    box.append(e); return;
+  }
+  list.slice().reverse().forEach(b => {
+    const c = compute(b);
+    const row = document.createElement("div"); row.className = "batch";
+    const left = document.createElement("div");
+    const t = document.createElement("div"); t.className = "t";
+    t.textContent = "Batch " + (b.batch || "–") + (shown("hist", "d_week") ? " · Week " + (b.week ?? "–") : "");
+    if (c.owed > 0 && shown("hist", "d_owed")) { const bd = document.createElement("span"); bd.className = "badge"; bd.textContent = "owed " + money(c.owed); t.append(bd); }
+    const s = document.createElement("div"); s.className = "s";
+    const sp = [];
+    if (shown("hist", "d_date")) sp.push(niceDate(b.date));
+    if (shown("hist", "d_packs")) sp.push(whole(c.packs) + " packs");
+    if (shown("hist", "d_cpp")) sp.push("cost/pack " + money(c.costPerPack));
+    if (shown("hist", "d_cost")) sp.push("cost " + money(c.totalCost));
+    s.textContent = sp.join(" · ");
+    left.append(t);
+    if (sp.length) left.append(s);
+    if (b.notes && shown("hist", "d_notes")) { const nt = document.createElement("div"); nt.className = "s"; nt.textContent = b.notes; left.append(nt); }
+    const right = document.createElement("div");
+    const p = document.createElement("div"); p.className = "p " + (c.profit >= 0 ? "pos" : "neg"); p.textContent = money(c.profit);
+    const m = document.createElement("div"); m.className = "s"; m.style.textAlign = "right";
+    const mp = [];
+    if (shown("hist", "d_rev")) mp.push("rev " + money(c.revenue));
+    if (shown("hist", "d_margin") && c.margin !== null) mp.push(nf1.format(c.margin) + "%");
+    m.textContent = mp.join(" · ");
+    const btns = document.createElement("div"); btns.className = "btns";
+    const eb = document.createElement("button"); eb.className = "btn small secondary"; eb.type = "button"; eb.textContent = "Edit";
+    eb.onclick = () => editBatch(b.id);
+    const db = document.createElement("button"); db.className = "btn small danger"; db.type = "button"; db.textContent = "Delete";
+    db.onclick = () => deleteBatch(b.id);
+    btns.append(eb, db);
+    if (shown("hist", "d_profit")) right.append(p);
+    if (mp.length) right.append(m);
+    right.append(btns);
+    row.append(left, right);
+    box.append(row);
+  });
+}
+function editBatch(id) {
+  const b = batches.find(x => x.id === id); if (!b) return;
+  writeForm(formFromRecord(b));
+  setEditing(id);
+  update();
+  showTab("calc");
+  window.scrollTo(0, 0);
+}
+function deleteBatch(id) {
+  const b = batches.find(x => x.id === id); if (!b) return;
+  if (!confirm("Delete batch " + (b.batch || "") + " (" + niceDate(b.date) + ")? This cannot be undone.")) return;
+  batches = batches.filter(x => x.id !== id);
+  store(LS_BATCHES, batches);
+  if (editingId === id) setEditing(null);
+  renderAll();
+  toast("Batch deleted");
+}
 
+/* ---------------- CSV ---------------- */
+const COLS = [
+  ["date","Date","in"],["year","Year","in"],["week","Week","in"],["batch","Batch","in"],
+  ["plantain","Plantain cost","in"],["oilUsed","Oil containers used","in"],["oilPrice","Oil price per container","in"],
+  ["gasUsed","Gas cylinders used","in"],["gasPrice","Gas price per cylinder","in"],["packPrice","Packaging price per pack","in"],
+  ["boxCost","Packaging box price","in"],["transport","Transportation","in"],["boxes","Boxes produced","in"],["perBox","Packs per box","in"],
+  ["wsBoxes","Boxes sold wholesale","in"],["boxPrice","Wholesale price per box","in"],["retailPacks","Packs sold retail","in"],
+  ["retailPrice","Retail price per pack","in"],["owed","Still owed (credit)","in"],["notes","Notes","in"],
+  ["packs","Total packs","out"],["oilCost","Oil cost","out"],["gasCost","Gas cost","out"],["packCost","Packaging cost (packs)","out"],
+  ["boxTotal","Packaging cost (boxes)","out"],["totalCost","Total cost","out"],["revenue","Revenue","out"],["profit","Profit","out"],
+  ["margin","Margin %","out"],["cash","Cash received","out"],["costPerPack","Cost per pack","out"],["profitPerPack","Profit per pack","out"],
+  ["profitPerBox","Profit per box","out"],["unsold","Unsold packs","out"],["source","Source","meta"]
+];
+// Trend data section of the CSV (same values as the charts)
+const TREND_COLS = [
+  ["tr_profit","Profit", c => c.profit],
+  ["tr_margin","Margin %", c => c.margin],
+  ["tr_sellPack","Selling price per pack", c => c.packsSold ? c.pricePerPackSold : null],
+  ["tr_costPack","Cost per pack", c => c.packs ? c.costPerPack : null],
+  ["tr_oil","Oil price per container", (c, b) => b.legacy ? null : b.oilPrice],
+  ["tr_gas","Gas price per cylinder", (c, b) => b.legacy ? null : b.gasPrice]
+];
+function csvCell(v, sep) {
+  let s = (v === null || v === undefined) ? "" : String(v);
+  if (/["\n\r]/.test(s) || s.includes(sep)) s = '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function exportCSV() {
+  const sep = $("sep").value;
+  const dec = sep === ";" ? "," : ".";
+  const num = (v, d = 2) => {
+    if (v === null || v === undefined || !isFinite(v)) return "";
+    const f = Math.pow(10, d), s = String(Math.round(v * f) / f);
+    return dec === "," ? s.replace(".", ",") : s;
+  };
+  const list = filtered();
+  if (!list.length) { toast("Nothing to export"); return; }
+  const on = k => shown("csv", k);
+  const bCols = COLS.filter(c => on(c[0]));
+  const tCols = TREND_COLS.filter(c => on(c[0]));
+  const doSum = on("sec_summary"), doBatches = on("sec_batches") && bCols.length, doTrends = on("sec_trends") && tCols.length;
+  if (!doSum && !doBatches && !doTrends) { toast("Tick at least one section to export"); return; }
+  const row = cells => cells.join(sep);
+  const out = [];
+  const yearTxt = settings.year === "all" ? "All years" : settings.year;
+
+  if (doSum) {
+    let rev = 0, prof = 0, owed = 0, packs = 0, cost = 0;
+    list.forEach(b => { const c = compute(b); rev += c.revenue; prof += c.profit; owed += c.owed; packs += c.packs; cost += c.totalCost; });
+    out.push(row(["SUMMARY", csvCell(yearTxt, sep)]));
+    out.push(row(["Batches", list.length]));
+    out.push(row([csvCell("Total cost (GHS)", sep), num(cost)]));
+    out.push(row([csvCell("Revenue (GHS)", sep), num(rev)]));
+    out.push(row([csvCell("Profit (GHS)", sep), num(prof)]));
+    out.push(row([csvCell("Avg. margin %", sep), rev > 0 ? num(prof / rev * 100) : ""]));
+    out.push(row(["Packs produced", num(packs)]));
+    out.push(row([csvCell("Still owed (GHS)", sep), num(owed)]));
+    out.push("");
+  }
+  if (doBatches) {
+    out.push("BATCH HISTORY");
+    out.push(row(bCols.map(c => csvCell(c[1], sep))));
+    list.forEach(b => {
+      const c = compute(b);
+      out.push(row(bCols.map(([k, , kind]) => {
+        if (k === "source") return b.legacy ? "old CSV" : "";
+        if (["date","batch","notes"].includes(k)) return csvCell(b[k] || "", sep);
+        if (k === "year" || k === "week") return csvCell(b[k] ?? "", sep);
+        if (k === "wsBoxes" && (b.wsBoxes === null || b.wsBoxes === undefined)) return num(b.boxes, 4);
+        return csvCell(kind === "out" ? num(c[k]) : num(b[k], 4), sep);
+      })));
+    });
+    out.push("");
+  }
+  if (doTrends) {
+    out.push("TREND DATA");
+    out.push(row(["Date", "Week", "Batch", ...tCols.map(c => csvCell(c[1], sep))]));
+    list.forEach(b => {
+      const c = compute(b);
+      out.push(row([b.date || "", b.week ?? "", csvCell(b.batch || "", sep), ...tCols.map(t => num(t[2](c, b)))]));
+    });
+    out.push("");
+  }
+  const blob = new Blob(["\ufeff" + out.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  const y = settings.year === "all" ? "all_years" : settings.year;
+  a.download = "sakal_batches_" + y + "_" + todayISO() + ".csv";
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  const parts = [doSum && "summary", doBatches && list.length + " batches", doTrends && "trend data"].filter(Boolean);
+  toast("Exported " + parts.join(", "));
+}
+
+function parseCSV(text) {
+  text = text.replace(/^﻿/, "");
+  const first = text.split(/\r?\n/)[0] || "";
+  const sep = (first.match(/;/g) || []).length > (first.match(/,/g) || []).length ? ";" : ",";
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === sep) { row.push(cell); cell = ""; }
+    else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); cell = ""; rows.push(row); row = [];
+    } else cell += ch;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim() !== ""));
+}
+
+// "1.11.2026", "01/11/2026", "11/1/2026", "2026-11-01"
+function parseLooseDate(s) {
+  s = (s || "").trim();
+  let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);
+  if (m) return [+m[1], +m[2], +m[3]];
+  m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/.exec(s);
+  if (!m) return null;
+  let a = +m[1], b = +m[2], y = +m[3]; if (y < 100) y += 2000;
+  let d, mo;
+  if (s.includes(".")) { d = a; mo = b; }
+  else if (a > 12) { d = a; mo = b; }
+  else if (b > 12) { mo = a; d = b; }
+  else { d = a; mo = b; } // assume day/month (Ghana/UK)
+  return [y, mo, d];
+}
+function isoFromParts(p) { return p ? p[0] + "-" + String(p[1]).padStart(2, "0") + "-" + String(p[2]).padStart(2, "0") : todayISO(); }
+
+function importRows(rows, filename) {
+  if (!rows.length) return [];
+  const out = [];
+  // --- new format (one row per batch); the table may come after a summary section
+  const hi = rows.findIndex(r => r.map(h => h.trim()).includes("Batch") && r.map(h => h.trim()).includes("Plantain cost"));
+  const header = hi >= 0 ? rows[hi].map(h => h.trim()) : [];
+  if (hi >= 0) {
+    const idx = {}; COLS.forEach(([k, h, kind]) => { if (kind !== "out") idx[k] = header.indexOf(h); });
+    for (const cells of rows.slice(hi + 1)) {
+      if (cells.length < 3 || /^[A-Z ]+$/.test((cells[0] || "").trim())) break; // next section starts
+      const get = k => idx[k] >= 0 ? (cells[idx[k]] ?? "") : "";
+      const r = { date: isoFromParts(parseLooseDate(get("date"))), batch: get("batch").trim(), notes: get("notes") };
+      NUM_FIELDS.forEach(k => { const v = parseNum(get(k)); r[k] = isNaN(v) ? 0 : v; });
+      const d = dateFromISO(r.date), iw = isoWeek(d);
+      r.year = parseInt(get("year"), 10) || iw.year;
+      r.week = parseInt(get("week"), 10) || iw.week;
+      if (get("source").trim() === "old CSV") r.legacy = true;
+      out.push(r);
+    }
+    return out;
+  }
+  // --- old format: labels in column A, one column per save date
+  const labelRow = {}; rows.forEach((r, i) => { if (i > 0) labelRow[(r[0] || "").trim()] = i; });
+  if (!("Plantain Cost" in labelRow) || !("Total Cost" in labelRow)) throw new Error("unknown");
+  const fnm = /batch_([^_]+)_week_(\d+)_(\d{4})/.exec(filename || "");
+  const nCols = Math.max(...rows.map(r => r.length));
+  for (let c = 1; c < nCols; c++) {
+    const v = lab => { const i = labelRow[lab]; const x = i === undefined ? 0 : parseNum(rows[i][c]); return isNaN(x) ? 0 : x; };
+    const dateParts = parseLooseDate(rows[0][c]);
+    if (!dateParts && !v("Total Cost")) continue;
+    const oil = v("Oil Cost"), gas = v("Gas Cost"), pack = v("Packaging Cost"), boxT = v("Box Cost");
+    const total = v("Total Cost"), rev = v("Revenue"), profit = v("Profit"), ppb = v("Profit per Box"), cpp = v("Cost per Pack");
+    let boxes = ppb ? Math.round(profit / ppb) : (rev && boxT ? Math.round(boxT / 8) : 0);
+    if (!(boxes > 0)) boxes = 0;
+    const packsEst = cpp ? total / cpp : 0;
+    const perBox = boxes && packsEst ? Math.max(1, Math.round(packsEst / boxes)) : 48;
+    const packs = boxes * perBox;
+    const r = {
+      date: isoFromParts(dateParts), batch: (fnm && nCols === 2) ? fnm[1] : "", notes: "Imported from old CSV" + (filename ? " (" + filename + ")" : ""),
+      plantain: v("Plantain Cost"), oilUsed: oil ? 1 : 0, oilPrice: oil, gasUsed: gas ? 1 : 0, gasPrice: gas,
+      packPrice: packs ? pack / packs : 0, boxCost: boxes ? boxT / boxes : 0, transport: v("Transport"),
+      boxes, perBox, boxPrice: boxes ? rev / boxes : 0, wsBoxes: null, retailPacks: 0, retailPrice: 0, owed: 0, legacy: true
+    };
+    const iw = isoWeek(dateFromISO(r.date));
+    r.year = iw.year; r.week = (fnm && nCols === 2) ? +fnm[2] : iw.week;
+    out.push(r);
+  }
+  return out;
+}
+
+function mergeImported(list) {
+  let added = 0, replaced = 0;
+  list.forEach(r => {
+    const key = x => x.batch ? "b|" + x.year + "|" + x.batch : "d|" + x.date + "|" + Math.round(compute(x).totalCost);
+    const i = batches.findIndex(b => key(b) === key(r));
+    r.updated = Date.now();
+    if (i >= 0) { r.id = batches[i].id; r.created = batches[i].created; batches[i] = r; replaced++; }
+    else { r.id = "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); r.created = Date.now(); batches.push(r); added++; }
+  });
+  store(LS_BATCHES, batches);
+  return { added, replaced };
+}
+
+async function importFiles(files) {
+  let added = 0, replaced = 0, failed = [];
+  for (const file of files) {
+    try {
+      const rows = parseCSV(await file.text());
+      const res = mergeImported(importRows(rows, file.name));
+      added += res.added; replaced += res.replaced;
+    } catch (e) { failed.push(file.name); }
+  }
+  renderAll();
+  let msg = "Imported " + added + " new batch" + (added === 1 ? "" : "es");
+  if (replaced) msg += ", updated " + replaced;
+  if (failed.length) msg += ". Could not read: " + failed.join(", ");
+  toast(msg, 4000);
+}
+
+/* ---------------- charts ---------------- */
+const SVGNS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.append(e);
+  return e;
+}
+function niceTicks(min, max, count) {
+  if (min === max) { max = min + 1; }
+  const span = max - min, step0 = span / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(step0)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= step0);
+  const lo = Math.floor(min / step) * step, hi = Math.ceil(max / step) * step;
+  const t = []; for (let v = lo; v <= hi + step / 2; v += step) t.push(Math.round(v * 1e6) / 1e6);
+  return t;
+}
+const compact = v => Math.abs(v) >= 1000 ? nf1.format(v / 1000) + "k" : (Math.abs(v) < 10 && v % 1 ? v.toFixed(2) : nf0.format(v));
+
+// opts: {labels, titles, series:[{name, color, values}], type:'bar'|'line', fmt, polarity}
+function drawChart(wrap, opts) {
+  wrap.innerHTML = "";
+  if (opts.series.length > 1 || opts.legend) {
+    const lg = document.createElement("div"); lg.className = "legend";
+    opts.series.forEach(s => { const sp = document.createElement("span"); const i = document.createElement("i"); i.style.background = s.color; sp.append(i, document.createTextNode(s.name)); lg.append(sp); });
+    wrap.append(lg);
+  }
+  const W = Math.max(280, wrap.clientWidth || 320), H = 210;
+  const m = { l: 44, r: 12, t: 10, b: 26 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const all = opts.series.flatMap(s => s.values).filter(v => v !== null && isFinite(v));
+  if (!all.length) { const e = document.createElement("div"); e.className = "empty"; e.textContent = "No data"; wrap.append(e); return; }
+  let lo = Math.min(...all), hi = Math.max(...all);
+  if (opts.type === "bar" || opts.zero) { lo = Math.min(0, lo); hi = Math.max(0, hi); }
+  else { const pad = (hi - lo) * 0.15 || Math.abs(hi) * 0.1 || 1; lo -= pad; hi += pad; if (lo < 0 && Math.min(...all) >= 0) lo = 0; }
+  const ticks = niceTicks(lo, hi, 4);
+  lo = ticks[0]; hi = ticks[ticks.length - 1];
+  const y = v => m.t + ih - (v - lo) / (hi - lo) * ih;
+  const n = opts.labels.length, band = iw / n;
+  const x = i => m.l + band * (i + 0.5);
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": opts.aria || "chart" }, wrap);
+  const axis = el("g", { class: "axis" }, svg);
+  ticks.forEach(t => {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(t), y2: y(t), stroke: t === 0 ? "var(--muted)" : "var(--grid)", "stroke-width": 1 }, axis);
+    const tx = el("text", { x: m.l - 6, y: y(t) + 4, "text-anchor": "end" }, axis); tx.textContent = compact(t);
+  });
+  const every = Math.ceil(n / Math.max(1, Math.floor(iw / 44)));
+  opts.labels.forEach((l, i) => {
+    if (i % every && i !== n - 1) return;
+    const tx = el("text", { x: x(i), y: H - 8, "text-anchor": "middle" }, axis); tx.textContent = l;
+  });
+  const marks = [];
+  if (opts.type === "bar") {
+    const s = opts.series[0], bw = Math.max(3, Math.min(28, band - 4)), rr = Math.min(4, bw / 2);
+    s.values.forEach((v, i) => {
+      if (v === null || !isFinite(v)) return;
+      const x0 = x(i) - bw / 2, y0 = y(0), y1 = y(v), h = Math.abs(y1 - y0);
+      const color = opts.polarity && v < 0 ? "var(--loss)" : s.color;
+      let d;
+      if (h < rr) d = `M${x0},${Math.min(y0, y1)}h${bw}v${Math.max(h, 1)}h${-bw}z`;
+      else if (v >= 0) d = `M${x0},${y0}V${y1 + rr}Q${x0},${y1} ${x0 + rr},${y1}H${x0 + bw - rr}Q${x0 + bw},${y1} ${x0 + bw},${y1 + rr}V${y0}Z`;
+      else d = `M${x0},${y0}V${y1 - rr}Q${x0},${y1} ${x0 + rr},${y1}H${x0 + bw - rr}Q${x0 + bw},${y1} ${x0 + bw},${y1 - rr}V${y0}Z`;
+      marks[i] = el("path", { d, fill: color }, svg);
+    });
+  } else {
+    opts.series.forEach(s => {
+      let d = "", pen = false;
+      s.values.forEach((v, i) => { if (v === null || !isFinite(v)) { pen = false; return; } d += (pen ? "L" : "M") + x(i) + "," + y(v); pen = true; });
+      el("path", { d, fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+      if (n <= 30) s.values.forEach((v, i) => { if (v !== null && isFinite(v)) el("circle", { cx: x(i), cy: y(v), r: 4, fill: s.color, stroke: "var(--card)", "stroke-width": 2 }, svg); });
+    });
+  }
+  // hover / tap layer
+  const cross = el("line", { y1: m.t, y2: m.t + ih, stroke: "var(--muted)", "stroke-width": 1, "stroke-dasharray": "3 3", visibility: "hidden" }, svg);
+  const hit = el("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent" }, svg);
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; wrap.append(tip);
+  const show = ev => {
+    const rect = svg.getBoundingClientRect();
+    const px = (ev.clientX - rect.left) * (W / rect.width);
+    const i = Math.max(0, Math.min(n - 1, Math.floor((px - m.l) / band)));
+    tip.innerHTML = "";
+    const h = document.createElement("div"); h.className = "h"; h.textContent = opts.titles[i]; tip.append(h);
+    opts.series.forEach(s => {
+      const v = s.values[i];
+      const row = document.createElement("div"); row.className = "row";
+      const k = document.createElement("i"); k.style.background = opts.polarity && v < 0 ? "var(--loss)" : s.color;
+      const st = document.createElement("strong"); st.textContent = v === null || !isFinite(v) ? "–" : opts.fmt(v);
+      row.append(k, st, document.createTextNode(" " + s.name)); tip.append(row);
+    });
+    tip.hidden = false;
+    marks.forEach((mk, j) => mk && mk.setAttribute("opacity", j === i ? 1 : 0.55));
+    if (opts.type !== "bar") { cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible"); }
+    const scale = rect.width / W, lg = wrap.querySelector(".legend"), legendH = lg ? lg.offsetHeight + 4 : 0;
+    let left = x(i) * scale + 10; const tw = tip.offsetWidth;
+    if (left + tw > rect.width) left = x(i) * scale - tw - 10;
+    tip.style.left = Math.max(0, left) + "px"; tip.style.top = (legendH + 2) + "px"; tip.style.left = tip.style.left;
+  };
+  const hide = () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); marks.forEach(mk => mk && mk.setAttribute("opacity", 1)); };
+  hit.addEventListener("pointermove", show);
+  hit.addEventListener("pointerdown", show);
+  hit.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") hide(); });
+  document.addEventListener("pointerdown", e => { if (!wrap.contains(e.target)) hide(); });
+}
+
+function renderTrends() {
+  const list = filtered();
+  const ok = list.length >= 2;
+  $("trendsEmpty").hidden = ok; $("trendsBody").hidden = !ok;
+  if (!ok || $("tab-trends").hidden) return;
+  const cs = list.map(compute);
+  const labels = list.map(b => b.batch ? "B" + b.batch : (dateFromISO(b.date) || new Date()).toLocaleDateString("en-GB", { day: "numeric", month: "short" }));
+  const titles = list.map(b => "Batch " + (b.batch || "–") + " · Wk " + (b.week ?? "–") + " · " + niceDate(b.date));
+  const ghs = v => "GHS " + money(v);
+  const on = k => shown("trend", k);
+  const vis = { cardProfit: on("profit"), cardPack: on("sellPack") || on("costPack"), cardInputs: on("oil") || on("gas"), cardMargin: on("margin") };
+  Object.keys(vis).forEach(id => $(id).hidden = !vis[id]);
+  $("trendsNone").hidden = Object.values(vis).some(Boolean);
+  if (vis.cardProfit) drawChart($("chProfit"), { type: "bar", labels, titles, polarity: true, fmt: ghs, aria: "Profit per batch",
+    series: [{ name: "profit", color: "var(--series-1)", values: cs.map(c => c.profit) }] });
+  if (vis.cardPack) drawChart($("chPack"), { type: "line", labels, titles, fmt: ghs, aria: "Cost and selling price per pack", legend: true,
+    series: [
+      on("sellPack") && { name: "selling price per pack", color: "var(--series-1)", values: cs.map(c => c.packsSold ? c.pricePerPackSold : null) },
+      on("costPack") && { name: "cost per pack", color: "var(--series-2)", values: cs.map(c => c.packs ? c.costPerPack : null) }
+    ].filter(Boolean) });
+  const live = list.map((b, i) => ({ b, i })).filter(o => !o.b.legacy);
+  $("legacyNote").hidden = live.length === list.length;
+  if (!vis.cardInputs) { /* hidden */ }
+  else if (live.length >= 1) {
+    drawChart($("chInputs"), { type: "line", labels: live.map(o => labels[o.i]), titles: live.map(o => titles[o.i]), fmt: ghs, aria: "Oil and gas prices", legend: true,
+      series: [
+        on("oil") && { name: "oil per container", color: "var(--series-1)", values: live.map(o => o.b.oilPrice || null) },
+        on("gas") && { name: "gas per cylinder", color: "var(--series-2)", values: live.map(o => o.b.gasPrice || null) }
+      ].filter(Boolean) });
+  } else { $("chInputs").innerHTML = '<div class="empty">No batches with unit prices yet.</div>'; }
+  if (vis.cardMargin) drawChart($("chMargin"), { type: "line", zero: true, labels, titles, fmt: v => nf1.format(v) + " %", aria: "Profit margin",
+    series: [{ name: "margin", color: "var(--series-1)", values: cs.map(c => c.margin) }] });
+}
+
+/* ---------------- "choose what to show" panels ---------------- */
+const PICKERS = {
+  hist: { el: "pickHist", title: "Choose what to show", groups: [
+    ["Summary boxes", [["t_batches","Batches"],["t_revenue","Revenue"],["t_profit","Profit"],["t_margin","Avg. margin"],["t_packs","Packs produced"],["t_owed","Still owed"]]],
+    ["Batch list", [["d_week","Week"],["d_date","Date"],["d_packs","Packs"],["d_cpp","Cost per pack"],["d_cost","Total cost"],["d_profit","Profit"],["d_rev","Revenue"],["d_margin","Margin"],["d_owed","Owed badge"],["d_notes","Notes"]]]
+  ], onChange: () => renderHistory() },
+  trend: { el: "pickTrend", title: "Choose what to show", groups: [
+    ["Charts and lines", [["profit","Profit per batch"],["sellPack","Selling price per pack"],["costPack","Cost per pack"],["oil","Oil price"],["gas","Gas price"],["margin","Profit margin"]]]
+  ], onChange: () => renderTrends() },
+  csv: { el: "pickCsv", title: "What to include in the CSV", groups: [
+    ["Sections", [["sec_summary","Summary totals"],["sec_batches","Batch history"],["sec_trends","Trend data (chart values)"]]],
+    ["Batch history – batch details", COLS.filter(c => c[2] !== "out").map(c => [c[0], c[1]]), "sec_batches"],
+    ["Batch history – calculated results", COLS.filter(c => c[2] === "out").map(c => [c[0], c[1]]), "sec_batches"],
+    ["Trend data – lines", TREND_COLS.map(c => [c[0], c[1]]), "sec_trends"]
+  ], onChange: () => {} }
+};
+function buildPicker(group) {
+  const cfg = PICKERS[group], d = $(cfg.el);
+  const keys = cfg.groups.flatMap(g => g[1].map(i => i[0]));
+  const wasOpen = d.open;
+  d.innerHTML = "";
+  const sum = document.createElement("summary");
+  const st = document.createElement("span"); st.textContent = cfg.title;
+  const cnt = document.createElement("span"); cnt.className = "count";
+  const n = keys.filter(k => shown(group, k)).length;
+  cnt.textContent = n === keys.length ? "all" : n + " of " + keys.length;
+  sum.append(st, cnt); d.append(sum);
+  cfg.groups.forEach(([gname, items, dep]) => {
+    const off = dep && !shown(group, dep);
+    const g = document.createElement("div"); g.className = "pick-group" + (off ? " off" : "");
+    const h = document.createElement("h3"); h.textContent = gname; g.append(h);
+    const list = document.createElement("div"); list.className = "pick-list";
+    items.forEach(([k, label]) => {
+      const lb = document.createElement("label");
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = shown(group, k); cb.dataset.key = k; cb.disabled = !!off;
+      cb.addEventListener("change", () => setShown(group, [k], cb.checked));
+      lb.append(cb, document.createTextNode(label)); list.append(lb);
+    });
+    g.append(list); d.append(g);
+  });
+  const btns = document.createElement("div"); btns.className = "pick-btns";
+  const all = document.createElement("button"); all.type = "button"; all.className = "btn small secondary"; all.textContent = "Select all";
+  all.onclick = () => setShown(group, keys, true);
+  const none = document.createElement("button"); none.type = "button"; none.className = "btn small secondary"; none.textContent = "Clear all";
+  none.onclick = () => setShown(group, keys, false);
+  btns.append(all, none); d.append(btns);
+  d.open = wasOpen;
+}
+function setShown(group, keys, on) {
+  const hide = new Set(settings.hide[group]);
+  keys.forEach(k => on ? hide.delete(k) : hide.add(k));
+  settings.hide[group] = [...hide];
+  store(LS_SETTINGS, settings);
+  buildPicker(group);
+  PICKERS[group].onChange();
+}
+
+/* ---------------- UI wiring ---------------- */
+let toastTimer;
+function toast(msg, ms) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), ms || 2500);
+}
+function showTab(name) {
+  document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+  document.querySelectorAll("section.tab").forEach(s => s.hidden = s.id !== "tab-" + name);
+  if (name === "trends") renderTrends();
+  if (name === "history") renderHistory();
+}
+function renderAll() {
+  renderYearFilters(); renderHistory(); renderTrends(); update();
+}
+
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+ALL_FIELDS.forEach(k => $(k).addEventListener("input", update));
+$("date").addEventListener("change", () => {
+  const d = dateFromISO($("date").value);
+  if (d) $("week").value = isoWeek(d).week;
+  update();
+});
+$("targetMargin").addEventListener("input", () => { settings.targetMargin = $("targetMargin").value; store(LS_SETTINGS, settings); update(); });
+$("saveBtn").addEventListener("click", saveBatch);
+$("newBtn").addEventListener("click", () => { if (editingId) toast("Stopped editing"); newBatch(); });
+$("cancelEdit").addEventListener("click", newBatch);
+document.querySelectorAll(".yearFilter").forEach(sel => sel.addEventListener("change", () => {
+  settings.year = sel.value; store(LS_SETTINGS, settings); renderYearFilters(); renderHistory(); renderTrends();
+}));
+$("sep").addEventListener("change", () => { settings.sep = $("sep").value; store(LS_SETTINGS, settings); });
+$("exportBtn").addEventListener("click", exportCSV);
+$("importBtn").addEventListener("click", () => $("importFile").click());
+$("importFile").addEventListener("change", e => { const fs = [...e.target.files]; e.target.value = ""; if (fs.length) importFiles(fs); });
+$("importFile").multiple = true;
+let resizeTimer;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderTrends, 150); });
+
+// install prompt (Android/Chrome)
+let deferredPrompt = null;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferredPrompt = e; $("installRow").hidden = false; });
+$("installBtn").addEventListener("click", async () => { if (!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; $("installRow").hidden = true; });
+
+/* ---------------- start ---------------- */
+(function init() {
+  // CSV separator default: semicolon if this device uses decimal commas
+  const decComma = (1.5).toLocaleString().includes(",");
+  $("sep").value = settings.sep || (decComma ? ";" : ",");
+  $("targetMargin").value = settings.targetMargin;
+  const draft = load(LS_DRAFT, null);
+  if (draft && draft.form) {
+    writeForm(draft.form);
+    Object.keys(DEFAULTS).forEach(k => { if (String($(k).value).trim() === "") $(k).value = DEFAULTS[k]; });
+    if (!$("date").value) $("date").value = todayISO();
+    setEditing(draft.editingId && batches.some(b => b.id === draft.editingId) ? draft.editingId : null);
+  } else {
+    newBatch();
+  }
+  Object.keys(PICKERS).forEach(buildPicker);
+  renderAll();
+})();
+
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
 </body>
 </html>
