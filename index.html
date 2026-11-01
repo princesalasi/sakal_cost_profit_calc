@@ -103,6 +103,16 @@ button.btn.danger { background: transparent; color: var(--bad); border: 1px soli
 .empty { text-align: center; color: var(--muted); padding: 24px 8px; }
 #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 50; max-width: 90vw; text-align: center; }
 #toast.show { opacity: 1; }
+#toast.has-action { pointer-events: auto; display: flex; gap: 12px; align-items: center; }
+#toast button { background: transparent; border: 1px solid #fff8; color: #fff; border-radius: 6px; padding: 5px 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.list-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+.list-head h2 { margin: 0; }
+.selbar { position: sticky; top: 90px; z-index: 6; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 6px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+.selbar .n { flex: 1; font-size: 14px; font-weight: 600; min-width: 90px; }
+.batch.selectable { cursor: pointer; }
+.batch.selected { background: rgba(198,40,40,.07); }
+.batch .pick-cb { width: 22px; height: 22px; margin: 2px 4px 0 0; flex: none; accent-color: var(--bad); }
+.batch .grow { flex: 1; min-width: 0; }
 /* charts */
 .chart-wrap { position: relative; }
 .chart-wrap svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
@@ -290,7 +300,9 @@ let settings = Object.assign({ sep: null, targetMargin: "30", year: "all" }, loa
 settings.hide = Object.assign({ csv: [], hist: [], trend: [] }, settings.hide || {});
 const shown = (group, key) => !settings.hide[group].includes(key);
 let editingId = null;
-let batchTouched = false; // true once the user types their own batch number
+let batchTouched = false;
+let selectMode = false;
+const selected = new Set(); // true once the user types their own batch number
 
 /* ---------------- numbers ---------------- */
 // Accepts "0.70", "0,70", "1,200" (thousands), "1.200,50", "1,200.50"
@@ -555,10 +567,31 @@ function renderHistory() {
     e.textContent = batches.length ? "No batches in this year." : "No saved batches yet. Fill in the calculator and tap “Save batch”.";
     box.append(e); return;
   }
+  // header: title + "Select" toggle; select bar when selecting
+  const head = document.createElement("div"); head.className = "list-head";
+  const h = document.createElement("h2"); h.textContent = "Batches";
+  const selBtn = document.createElement("button"); selBtn.type = "button"; selBtn.className = "btn small secondary";
+  selBtn.textContent = selectMode ? "Done" : "Select to delete";
+  selBtn.onclick = () => { selectMode = !selectMode; selected.clear(); renderHistory(); };
+  head.append(h, selBtn); box.append(head);
+  const ids = list.map(b => b.id);
+  [...selected].forEach(id => { if (!ids.includes(id)) selected.delete(id); });
+  if (selectMode) {
+    const bar = document.createElement("div"); bar.className = "selbar";
+    const n = document.createElement("span"); n.className = "n"; n.textContent = selected.size + " selected";
+    const allB = document.createElement("button"); allB.type = "button"; allB.className = "btn small secondary";
+    const allOn = selected.size === ids.length;
+    allB.textContent = allOn ? "Select none" : "Select all";
+    allB.onclick = () => { if (allOn) selected.clear(); else ids.forEach(id => selected.add(id)); renderHistory(); };
+    const delB = document.createElement("button"); delB.type = "button"; delB.className = "btn small danger";
+    delB.textContent = "Delete selected"; delB.disabled = !selected.size; if (!selected.size) delB.style.opacity = .5;
+    delB.onclick = () => deleteBatches([...selected]);
+    bar.append(n, allB, delB); box.append(bar);
+  }
   list.slice().reverse().forEach(b => {
     const c = compute(b);
     const row = document.createElement("div"); row.className = "batch";
-    const left = document.createElement("div");
+    const left = document.createElement("div"); left.className = "grow";
     const t = document.createElement("div"); t.className = "t";
     t.textContent = "Batch " + (b.batch || "–") + (shown("hist", "d_week") ? " · Week " + (b.week ?? "–") : "");
     const s = document.createElement("div"); s.className = "s";
@@ -586,8 +619,16 @@ function renderHistory() {
     btns.append(eb, db);
     if (shown("hist", "d_profit")) right.append(p);
     if (mp.length) right.append(m);
-    right.append(btns);
-    row.append(left, right);
+    if (selectMode) {
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.className = "pick-cb";
+      cb.checked = selected.has(b.id); cb.setAttribute("aria-label", "Select batch " + (b.batch || ""));
+      row.classList.add("selectable"); row.classList.toggle("selected", cb.checked);
+      row.onclick = e => { if (e.target !== cb) cb.checked = !cb.checked; cb.checked ? selected.add(b.id) : selected.delete(b.id); renderHistory(); };
+      row.append(cb, left, right);
+    } else {
+      right.append(btns);
+      row.append(left, right);
+    }
     box.append(row);
   });
 }
@@ -599,14 +640,29 @@ function editBatch(id) {
   showTab("calc");
   window.scrollTo(0, 0);
 }
-function deleteBatch(id) {
-  const b = batches.find(x => x.id === id); if (!b) return;
-  if (!confirm("Delete batch " + (b.batch || "") + " (" + niceDate(b.date) + ")? This cannot be undone.")) return;
-  batches = batches.filter(x => x.id !== id);
+function deleteBatch(id) { deleteBatches([id]); }
+let undoTimer = null;
+function deleteBatches(ids) {
+  const gone = batches.filter(x => ids.includes(x.id));
+  if (!gone.length) return;
+  const what = gone.length === 1
+    ? "batch " + (gone[0].batch || "") + " (" + niceDate(gone[0].date) + ")"
+    : gone.length + " batches";
+  if (!confirm("Delete " + what + "?")) return;
+  const before = batches.slice();
+  batches = batches.filter(x => !ids.includes(x.id));
   store(LS_BATCHES, batches);
-  if (editingId === id) setEditing(null);
+  if (ids.includes(editingId)) setEditing(null);
+  selected.clear(); selectMode = false;
   renderAll();
-  toast("Batch deleted");
+  toast((gone.length === 1 ? "Batch " + (gone[0].batch || "") : gone.length + " batches") + " deleted", 8000, "Undo", () => {
+    // put back only the deleted ones (keep anything saved in the meantime)
+    const keep = new Set(batches.map(b => b.id));
+    batches = before.filter(b => keep.has(b.id) || ids.includes(b.id)).concat(batches.filter(b => !before.some(o => o.id === b.id)));
+    store(LS_BATCHES, batches);
+    renderAll();
+    toast("Restored");
+  });
 }
 
 /* ---------------- CSV ---------------- */
@@ -1015,9 +1071,16 @@ function setShown(group, keys, on) {
 
 /* ---------------- UI wiring ---------------- */
 let toastTimer;
-function toast(msg, ms) {
-  const t = $("toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), ms || 2500);
+function toast(msg, ms, actionLabel, action) {
+  const t = $("toast"); t.textContent = msg;
+  t.classList.toggle("has-action", !!action);
+  if (action) {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = actionLabel;
+    b.onclick = () => { t.classList.remove("show", "has-action"); clearTimeout(toastTimer); action(); };
+    t.append(b);
+  }
+  t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show", "has-action"), ms || 2500);
 }
 function showTab(name) {
   document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
